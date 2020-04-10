@@ -5,7 +5,7 @@ from torch import nn
 from torch import optim
 
 from model.models import TaskNormalization
-from utils import getArguments, getTinyImageNet, getRandomDataset, getModel, getMetaAlgorithm, saveValues
+from utils import getArguments, getTinyImageNet, getRandomDataset, getModel, getMetaAlgorithm, saveValues, addResults
 from train.meta_training import trainingProcessMeta
 from train.task_training import trainingProcessTask
 
@@ -69,6 +69,7 @@ def main(args, data_generators, model, device):
             'train_acc': [],
             'train_loss': [],
             'test_acc': [],
+            'final_acc': [],
         }
 
         task_dataloader = data_generators[i]
@@ -84,11 +85,13 @@ def main(args, data_generators, model, device):
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
 
-            addResults(model, data_generators, results)
+            addResults(model, data_generators, results, device, i, False)
 
-    # if args['save_model']:
-    #     name_file = '{}/{}_{}_{}'.format(base_path,str(time.time()),args['algorithm'], args['dataset'])
-    #     saveValues(name_file, results, model.module, args)
+        addResults(model, data_generators, results, device, i, False, True)
+
+    if args.save_model:
+        name_file = '{}/{}_{}_{}'.format(base_path,str(time.time()),args.dataset, args.str(amount_split))
+        saveValues(name_file, results, model.module, args)
 
 if __name__ == '__main__':
     parser = getArguments()

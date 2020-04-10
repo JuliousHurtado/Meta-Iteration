@@ -172,6 +172,7 @@ def getArguments():
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.003)
     parser.add_argument('--meta-learn', type=str2bool, default=True)
+    parser.add_argument('--save-model', type=str2bool, default=True)
 
     return parser
 
@@ -182,10 +183,15 @@ def saveValues(name_file, results, model, args):
             'checkpoint': model.state_dict()
             }, name_file)
 
-def addResults(model, data_generators, results, device, task, all_tasks=False):
+def addResults(model, data_generators, results, device, task, all_tasks=False, final_acc=False):
     if all_tasks:
         if j in range(i):
             test_accuracy = test_normal(model, data_generators[j]['val'], device)
             results[j]['test_acc'].append(test_accuracy)
     else:
         test_accuracy = test_normal(model, data_generators[i]['val'], device)
+
+    if final_acc:
+        if j in range(i):
+            test_accuracy = test_normal(model, data_generators[j]['val'], device)
+            results[j]['final_acc'].append(test_accuracy)
