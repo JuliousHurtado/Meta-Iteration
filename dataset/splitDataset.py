@@ -53,11 +53,13 @@ def make_dataset(dir, class_to_idx, extensions=None, is_valid_file=None):
         if not os.path.isdir(d):
             continue
         for root, _, fnames in sorted(os.walk(d, followlinks=True)):
-            for fname in sorted(fnames):
+            for i,fname in enumerate(sorted(fnames)):
                 path = os.path.join(root, fname)
                 if is_valid_file(path):
                     item = (path, class_to_idx[target])
                     images.append(item)
+                # if i > 20:
+                #     break
 
     return images
 
@@ -103,7 +105,6 @@ class splitDataset(VisionDataset):
             classes = [d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d)) and d in selected_classes]
         classes.sort()
         class_to_idx = {classes[i]: i for i in range(len(classes))}
-        print(classes)
         return classes, class_to_idx
 
     def __getitem__(self, index):

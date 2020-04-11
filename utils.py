@@ -55,6 +55,8 @@ def getTinyImageNet(args):
                     l2l.data.transforms.NWays(train_dataset, args.ways),
                     l2l.data.transforms.KShots(train_dataset, 2*args.shots),
                     l2l.data.transforms.LoadData(train_dataset),
+                    l2l.data.transforms.RemapLabels(train_dataset),
+                    l2l.data.transforms.ConsecutiveLabels(train_dataset),
                 ]
 
             meta_loader = l2l.data.TaskDataset(l2l.data.MetaDataset(train_dataset),
@@ -80,6 +82,8 @@ def getRandomDataset(args):
                     l2l.data.transforms.NWays(train_dataset, args.ways),
                     l2l.data.transforms.KShots(train_dataset, 2*args.shots),
                     l2l.data.transforms.LoadData(train_dataset),
+                    l2l.data.transforms.RemapLabels(train_dataset),
+                    l2l.data.transforms.ConsecutiveLabels(train_dataset),
                 ]
             meta_loader = l2l.data.TaskDataset(l2l.data.MetaDataset(train_dataset),
                                            task_transforms=meta_transforms)
@@ -182,16 +186,3 @@ def saveValues(name_file, results, model, args):
             'args': args,
             'checkpoint': model.state_dict()
             }, name_file)
-
-def addResults(model, data_generators, results, device, task, all_tasks=False, final_acc=False):
-    if all_tasks:
-        if j in range(i):
-            test_accuracy = test_normal(model, data_generators[j]['val'], device)
-            results[j]['test_acc'].append(test_accuracy)
-    else:
-        test_accuracy = test_normal(model, data_generators[i]['val'], device)
-
-    if final_acc:
-        if j in range(i):
-            test_accuracy = test_normal(model, data_generators[j]['val'], device)
-            results[j]['final_acc'].append(test_accuracy)

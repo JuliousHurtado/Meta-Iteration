@@ -40,3 +40,16 @@ def test_normal(model, data_loader, device):
         output = model(input)
         correct += (F.softmax(output, dim=1).max(dim=1)[1] == target).data.sum()
     return correct.item() / len(data_loader.dataset)
+
+def addResults(model, data_generators, results, device, task, all_tasks=False, final_acc=False):
+    if all_tasks:
+        if j in range(task):
+            test_accuracy = test_normal(model, data_generators[j]['val'], device)
+            results[j]['test_acc'].append(test_accuracy)
+    else:
+        test_accuracy = test_normal(model, data_generators[task]['val'], device)
+
+    if final_acc:
+        if j in range(task):
+            test_accuracy = test_normal(model, data_generators[j]['val'], device)
+            results[j]['final_acc'].append(test_accuracy)

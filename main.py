@@ -5,9 +5,9 @@ from torch import nn
 from torch import optim
 
 from model.models import TaskNormalization
-from utils import getArguments, getTinyImageNet, getRandomDataset, getModel, getMetaAlgorithm, saveValues, addResults
+from utils import getArguments, getTinyImageNet, getRandomDataset, getModel, getMetaAlgorithm, saveValues
 from train.meta_training import trainingProcessMeta
-from train.task_training import trainingProcessTask
+from train.task_training import trainingProcessTask, addResults
 
 def parametersMAML(network, all_layers):
     for layer in network.children():
@@ -84,13 +84,13 @@ def main(args, data_generators, model, device):
             loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, loss, opti_task, [], device, None) 
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
-
+            print('Epoch [{}/{}] \t Train Loss: {} \t Train Acc {}'.format(e, args.epochs, loss_task, acc_task), flush=True)
             addResults(model, data_generators, results, device, i, False)
 
         addResults(model, data_generators, results, device, i, False, True)
 
     if args.save_model:
-        name_file = '{}/{}_{}_{}'.format(base_path,str(time.time()),args.dataset, args.str(amount_split))
+        name_file = '{}/{}_{}_{}'.format('results',str(time.time()),args.dataset, args.str(amount_split))
         saveValues(name_file, results, model.module, args)
 
 if __name__ == '__main__':
