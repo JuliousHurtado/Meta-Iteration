@@ -43,13 +43,13 @@ def test_normal(model, data_loader, device):
 
 def addResults(model, data_generators, results, device, task, all_tasks=False, final_acc=False):
     if all_tasks:
-        if j in range(task):
+        for j in range(task):
             test_accuracy = test_normal(model, data_generators[j]['val'], device)
             results[j]['test_acc'].append(test_accuracy)
     else:
         test_accuracy = test_normal(model, data_generators[task]['val'], device)
 
     if final_acc:
-        if j in range(task):
+        for j in range(task):
             test_accuracy = test_normal(model, data_generators[j]['val'], device)
             results[j]['final_acc'].append(test_accuracy)
