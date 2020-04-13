@@ -80,20 +80,24 @@ def main(args, data_generators, model, device):
             loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], [], device)
             results[i]['meta_loss'].append(loss_meta)
             results[i]['meta_acc'].append(acc_meta)
-            print('Meta: Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100))
+            print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i))
 
             opti_task = adjustModelTask(model, i+1, lr)
             loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, loss, opti_task, [], device, None) 
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
-            print('Task: Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100), flush=True)
+            print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i), flush=True)
             
             addResults(model, data_generators, results, device, i, False)
 
         addResults(model, data_generators, results, device, i, False, True)
 
+        if args.save_model:
+            name_file = '{}/{}_{}_{}'.format('results', 'temp', args.dataset, str(args.amount_split))
+            saveValues(name_file, results, model.module, args)
+
     if args.save_model:
-        name_file = '{}/{}_{}_{}'.format('results',str(time.time()),args.dataset, args.str(amount_split))
+        name_file = '{}/{}_{}_{}'.format('results',str(time.time()),args.dataset, str(args.amount_split))
         saveValues(name_file, results, model.module, args)
 
 if __name__ == '__main__':
