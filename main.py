@@ -80,12 +80,14 @@ def main(args, data_generators, model, device):
             loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], [], device)
             results[i]['meta_loss'].append(loss_meta)
             results[i]['meta_acc'].append(acc_meta)
+            print('Meta: Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100))
 
             opti_task = adjustModelTask(model, i+1, lr)
             loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, loss, opti_task, [], device, None) 
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
-            print('Epoch [{}/{}] \t Train Loss: {.4f} \t Train Acc {.2f} %'.format(e, args.epochs, loss_task, acc_task*100), flush=True)
+            print('Task: Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100), flush=True)
+            
             addResults(model, data_generators, results, device, i, False)
 
         addResults(model, data_generators, results, device, i, False, True)
