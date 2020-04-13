@@ -118,14 +118,14 @@ class MiniImagenetCNN(nn.Module):
                              layers=layers,
                              max_pool_factor=4 // layers,
                              task_normalization=task_normalization)
-        self.linear = nn.Linear((14*14) * hidden_size, output_size, bias=True)
+        self.linear = nn.Linear(25 * hidden_size, output_size, bias=True)
         maml_init_(self.linear)
         self.hidden_size = hidden_size
         self.layers = layers
 
     def forward(self, x):
         x = self.base(x)
-        x = self.linear(x.view(x.size(0), (14*14) * self.hidden_size))
+        x = self.linear(x.view(x.size(0), 25 * self.hidden_size))
         return x
 
     def setTaskNormalizationLayer(self, layers):
@@ -156,7 +156,7 @@ class TaskManager(nn.Module):
             if i != 0 and task_normalization:
                 for _ in range(layers): 
                     norm_layers.append(TaskNormalization(hidden_size, hidden_size).to(device))
-            linear_layer = nn.Linear((14*14) * hidden_size, out).to(device)
+            linear_layer = nn.Linear(25 * hidden_size, out).to(device)
 
             self.task[i] = { 'norm': norm_layers, 'linear': linear_layer }
 
