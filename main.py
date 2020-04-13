@@ -58,7 +58,7 @@ def adjustModelTask(model, task, lr):
     parametersTask(model, params)
     return optim.Adam(params, lr)
 
-def warmup(args, model, task_dataloader, loss, device, meta_warm, task_warm):
+def warmup(args, model, task_dataloader, loss, device, meta_warm, task_warm, lr):
     if meta_warm:
         print("Starting WarmUp Meta parameters")
         opti_meta = adjustModelMeta(model, 1, lr)  
@@ -77,7 +77,7 @@ def main(args, data_generators, model, device):
     lr = args.lr
     loss = nn.CrossEntropyLoss(reduction='mean')
 
-    warmup(args, model, data_generators[0], loss, device, True, False)
+    warmup(args, model, data_generators[0], loss, device, True, False, lr)
 
     results = {}
     for i in range(args.amount_split):
@@ -91,7 +91,7 @@ def main(args, data_generators, model, device):
         }
 
         task_dataloader = data_generators[i]
-        warmup(args, model, task_dataloader, loss, device, False, True)
+        warmup(args, model, task_dataloader, loss, device, False, True, lr)
         for e in range(args.epochs):
 
             opti_meta = adjustModelMeta(model, i+1, lr)            
