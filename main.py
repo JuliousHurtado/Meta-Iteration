@@ -62,7 +62,7 @@ def warmup(args, model, task_dataloader, loss, device, meta_warm, task_warm, lr)
     if meta_warm:
         print("Starting WarmUp Meta parameters")
         opti_meta = adjustModelMeta(model, 1, lr)  
-        for i in range(int(5000/args.num_iterations)):
+        for i in range(int(3000/args.num_iterations)):
             loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], [], device)
 
     if task_warm:
