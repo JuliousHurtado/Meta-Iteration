@@ -111,11 +111,11 @@ def main(args, data_generators, model, device):
         addResults(model, data_generators, results, device, i, False, True)
 
         if args.save_model:
-            name_file = '{}/meta_warmup_{}_{}_{}'.format('results', 'temp', args.dataset, str(args.amount_split))
+            name_file = '{}/meta_warmup_{}_{}_{}_{}'.format('results', args.meta_warmup, 'temp', args.dataset, str(args.amount_split))
             saveValues(name_file, results, model.module, args)
 
     if args.save_model:
-        name_file = '{}/meta_warmup_{}_{}_{}'.format('results',str(time.time()),args.dataset, str(args.amount_split))
+        name_file = '{}/meta_warmup_{}_{}_{}_{}'.format('results', args.meta_warmup, str(time.time()),args.dataset, str(args.amount_split))
         saveValues(name_file, results, model.module, args)
 
 if __name__ == '__main__':
