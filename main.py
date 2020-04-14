@@ -91,14 +91,14 @@ def main(args, data_generators, model, device):
         }
 
         task_dataloader = data_generators[i]
-        warmup(args, model, task_dataloader, loss, device, False, True, lr)
+        #warmup(args, model, task_dataloader, loss, device, False, True, lr)
         for e in range(args.epochs):
 
-            opti_meta = adjustModelMeta(model, i+1, lr)            
-            loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], [], device)
-            results[i]['meta_loss'].append(loss_meta)
-            results[i]['meta_acc'].append(acc_meta)
-            print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))
+            # opti_meta = adjustModelMeta(model, i+1, lr)            
+            # loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], [], device)
+            # results[i]['meta_loss'].append(loss_meta)
+            # results[i]['meta_acc'].append(acc_meta)
+            # print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))
 
             opti_task = adjustModelTask(model, i+1, lr)
             loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, loss, opti_task, [], device, None) 
@@ -111,11 +111,11 @@ def main(args, data_generators, model, device):
         addResults(model, data_generators, results, device, i, False, True)
 
         if args.save_model:
-            name_file = '{}/{}_{}_{}'.format('results', 'temp', args.dataset, str(args.amount_split))
+            name_file = '{}/meta_warmup_{}_{}_{}'.format('results', 'temp', args.dataset, str(args.amount_split))
             saveValues(name_file, results, model.module, args)
 
     if args.save_model:
-        name_file = '{}/{}_{}_{}'.format('results',str(time.time()),args.dataset, str(args.amount_split))
+        name_file = '{}/meta_warmup_{}_{}_{}'.format('results',str(time.time()),args.dataset, str(args.amount_split))
         saveValues(name_file, results, model.module, args)
 
 if __name__ == '__main__':
