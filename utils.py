@@ -48,7 +48,7 @@ def getTinyImageNet(args):
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True)
 
         meta_loader = None
-        if args.meta_learn:
+        if args.meta_learn or args.meta_warmup:
             create_bookkeeping(train_dataset)
 
             meta_transforms = [
@@ -75,7 +75,7 @@ def getRandomDataset(args):
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
         val_loader = torch.utils.data.DataLoader(RandomSet(), batch_size=args.batch_size, shuffle=True)
         meta_loader = None
-        if args.meta_learn:
+        if args.meta_learn or args.meta_warmup:
             create_bookkeeping(train_dataset)
 
             meta_transforms = [
