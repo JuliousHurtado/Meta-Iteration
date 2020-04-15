@@ -44,9 +44,9 @@ def checkParamsSum(model):
     #         print(n)
 
 
-def adjustModelMeta(model, task, lr):
-    model.setLinearLayer(0)
-    model.setTaskNormalizationLayer(task)
+def adjustModelMeta(model, task_linear, task_norm, lr):
+    model.setLinearLayer(task_linear)
+    model.setTaskNormalizationLayer(task_norm)
     params = []
     parametersMAML(model, params)
     return optim.Adam(params, lr)
@@ -58,11 +58,17 @@ def adjustModelTask(model, task, lr):
     parametersTask(model, params)
     return optim.Adam(params, lr)
 
+def adjustComplete(model, task, lr):
+    model.setLinearLayer(task)
+    model.setTaskNormalizationLayer(task)
+
+    return optim.SGD(model.parameters(), lr, weight_decay=1e-4)    
+
 def warmup(args, model, task_dataloader, loss, device, meta_warm, task_warm, lr):
     if meta_warm:
         print("Starting WarmUp Meta parameters")
-        opti_meta = adjustModelMeta(model, 1, lr)  
-        for i in range(int(3000/args.num_iterations)):
+        opti_meta = adjustModelMeta(model, 0, 1, lr)  
+        for i in range(args.meta_warmup):
             loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], [], device)
 
     if task_warm:
@@ -77,7 +83,7 @@ def main(args, data_generators, model, device):
     lr = args.lr
     loss = nn.CrossEntropyLoss(reduction='mean')
 
-    warmup(args, model, data_generators[0], loss, device, True, False, lr)
+    #warmup(args, model, data_generators[0], loss, device, True, False, lr)
 
     results = {}
     for i in range(args.amount_split):
@@ -92,15 +98,16 @@ def main(args, data_generators, model, device):
 
         task_dataloader = data_generators[i]
         #warmup(args, model, task_dataloader, loss, device, False, True, lr)
+        opti_task = adjustComplete(model, i+1, lr)
         for e in range(args.epochs):
 
-            # opti_meta = adjustModelMeta(model, i+1, lr)            
+            # opti_meta = adjustModelMeta(model, 0,i+1, lr)            
             # loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], [], device)
             # results[i]['meta_loss'].append(loss_meta)
             # results[i]['meta_acc'].append(acc_meta)
             # print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))
 
-            opti_task = adjustModelTask(model, i+1, lr)
+            #opti_task = adjustModelTask(model, i+1, lr)
             loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, loss, opti_task, [], device, None) 
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            

@@ -169,7 +169,7 @@ def getArguments():
     #---------------------Model------------------------------------#
     parser.add_argument('--hidden-size', type=int, default=32)
     parser.add_argument('--num-layers', type=int, default=4)
-    parser.add_argument('--task-normalization', type=str2bool, default=True)
+    parser.add_argument('--task-normalization', type=str2bool, default=False)
     #---------------------Regularization---------------------------#
     #---------------------Extras-----------------------------------#
     parser.add_argument('--seed', type=int, default=42)
