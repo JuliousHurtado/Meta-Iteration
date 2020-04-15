@@ -160,7 +160,7 @@ def getArguments():
     parser.add_argument('--adaptation-steps', type=int, default=5)
     parser.add_argument('--fast-lr', type=float, default=0.5)
     parser.add_argument('--first-order', type=str2bool, default=False)
-    parser.add_argument('--meta-warmup', type=int, default=5000)
+    parser.add_argument('--meta-warmup-iter', type=int, default=5000)
     #---------------------Datasets---------------------------------#
     parser.add_argument('--dataset', type=str, default='tiny-imagenet', choices=['tiny-imagenet', 'random'])
     parser.add_argument('--train-dataset', type=str)
