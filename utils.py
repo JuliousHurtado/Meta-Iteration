@@ -176,8 +176,13 @@ def getArguments():
     parser.add_argument('--epochs', type=int, default=80)
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.003)
-    parser.add_argument('--meta-learn', type=str2bool, default=True)
     parser.add_argument('--save-model', type=str2bool, default=True)
+    parser.add_argument('--meta-learn', type=str2bool, default=True)
+    parser.add_argument('--meta-warmup', type=str2bool, default=True)
+    parser.add_argument('--task-warmup', type=str2bool, default=True)
+    parser.add_argument('--task-complete', type=str2bool, default=True)
+
+
 
     return parser
 

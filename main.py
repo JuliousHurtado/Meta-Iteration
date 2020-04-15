@@ -83,7 +83,7 @@ def main(args, data_generators, model, device):
     lr = args.lr
     loss = nn.CrossEntropyLoss(reduction='mean')
 
-    #warmup(args, model, data_generators[0], loss, device, True, False, lr)
+    warmup(args, model, data_generators[0], loss, device, args.meta_warmup, args.task_warmup, lr)
 
     results = {}
     for i in range(args.amount_split):
@@ -97,17 +97,22 @@ def main(args, data_generators, model, device):
         }
 
         task_dataloader = data_generators[i]
-        #warmup(args, model, task_dataloader, loss, device, False, True, lr)
-        opti_task = adjustComplete(model, i+1, lr)
+        
+        if args.task_complete:
+            opti_task = adjustComplete(model, i+1, lr)
+
         for e in range(args.epochs):
 
-            # opti_meta = adjustModelMeta(model, 0,i+1, lr)            
-            # loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], [], device)
-            # results[i]['meta_loss'].append(loss_meta)
-            # results[i]['meta_acc'].append(acc_meta)
-            # print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))
+            if args.meta_learn:
+                opti_meta = adjustModelMeta(model, 0,i+1, lr)            
+                loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], [], device)
+                results[i]['meta_loss'].append(loss_meta)
+                results[i]['meta_acc'].append(acc_meta)
+                print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))
 
-            #opti_task = adjustModelTask(model, i+1, lr)
+            if not args.task_complete:
+                opti_task = adjustModelTask(model, i+1, lr)
+            
             loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, loss, opti_task, [], device, None) 
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
@@ -118,11 +123,11 @@ def main(args, data_generators, model, device):
         addResults(model, data_generators, results, device, i, False, True)
 
         if args.save_model:
-            name_file = '{}/meta_warmup_{}_{}_{}_{}'.format('results', args.meta_warmup, 'temp', args.dataset, str(args.amount_split))
+            name_file = '{}/{}_{}_{}_{}_{}'.format('results', 'temp', args.meta_warmup, args.meta_learn, args.task_warmup, args.task_complete)
             saveValues(name_file, results, model.module, args)
 
     if args.save_model:
-        name_file = '{}/meta_warmup_{}_{}_{}_{}'.format('results', args.meta_warmup, str(time.time()),args.dataset, str(args.amount_split))
+        name_file = '{}/{}_{}_{}_{}_{}'.format('results', str(time.time()), args.meta_warmup, args.meta_learn, args.task_warmup, args.task_complete)
         saveValues(name_file, results, model.module, args)
 
 if __name__ == '__main__':

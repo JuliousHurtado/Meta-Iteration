@@ -58,7 +58,7 @@ def make_dataset(dir, class_to_idx, extensions=None, is_valid_file=None):
                 if is_valid_file(path):
                     item = (path, class_to_idx[target])
                     images.append(item)
-                # if i > 20:
+                # if i > 500:
                 #     break
 
     return images
