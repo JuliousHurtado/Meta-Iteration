@@ -47,7 +47,7 @@ def getTinyImageNet(args):
 
         meta_loader = None
         if args.meta_learn or args.meta_warmup:
-            create_bookkeeping(train_dataset)
+            create_bookkeeping(train_dataset, args.ways, args.meta_label)
 
             meta_transforms = [
                     l2l.data.transforms.NWays(train_dataset, args.ways),
@@ -74,7 +74,7 @@ def getRandomDataset(args):
         val_loader = torch.utils.data.DataLoader(RandomSet(), batch_size=args.batch_size, shuffle=True)
         meta_loader = None
         if args.meta_learn or args.meta_warmup:
-            create_bookkeeping(train_dataset)
+            create_bookkeeping(train_dataset, args.ways, args.meta_label)
 
             meta_transforms = [
                     l2l.data.transforms.NWays(train_dataset, args.ways),
@@ -117,7 +117,7 @@ def getDividedCifar10(args):
         meta_loader = None
         if args.meta_learn:
             meta_dataset = DividedCIFAR10('data', train=True, labels = labels[task], transform = data_transforms['train'], args = args)
-            create_bookkeeping(meta_dataset, args.ways)
+            create_bookkeeping(meta_dataset, args.ways, args.meta_label)
 
             meta_transforms = [
                     l2l.data.transforms.NWays(meta_dataset, args.ways),
