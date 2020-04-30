@@ -138,7 +138,7 @@ def getDividedCifar10(args):
 
     return data_loader, cls_per_task
 
-def create_bookkeeping(dataset, ways):
+def create_bookkeeping(dataset, ways, meta_label):
     """
     Iterates over the entire dataset and creates a map of target to indices.
     Returns: A dict with key as the label and value as list of indices.
@@ -150,48 +150,43 @@ def create_bookkeeping(dataset, ways):
     labels_to_indices = defaultdict(list)
     indices_to_labels = defaultdict(int)
 
-    ############################
-    #
-    # No sabes si esto funciona, podemos comparar con asignar 
-    # labels al azar en cada epoca
-    #
-    ############################
     #------- RotNet Unsupervised-------#
-    # data = []
-    # angles = list(range(0,360,int(360/ways)))
-    # for i in range(len(dataset)):
-    #     angle = random.choice(angles)
-    #     img = Image.fromarray(dataset.data[i])
-    #     new_img = np.array(F.rotate(img, angle, False, False, None, None))
-    #     label = angles.index(angle)
+    if meta_label == 'rotnet':
+        data = []
+        angles = list(range(0,360,int(360/ways)))
+        for i in range(len(dataset)):
+            angle = random.choice(angles)
+            img = Image.fromarray(dataset.data[i])
+            new_img = np.array(F.rotate(img, angle, False, False, None, None))
+            label = angles.index(angle)
 
-    #     data.append(new_img)
+            data.append(new_img)
 
-    #     labels_to_indices[label].append(i)
-    #     indices_to_labels[i] = label
-    # dataset.data = data
+            labels_to_indices[label].append(i)
+            indices_to_labels[i] = label
+        dataset.data = data
+    elif meta_label == 'supervised':
+        #------- Original (Supervised) ---#
+        for i in range(len(dataset)):
+            try:
+                label = dataset[i][1]
+                # if label is a Tensor, then take get the scalar value
+                if hasattr(label, 'item'):
+                    label = dataset[i][1].item()
+            except ValueError as e:
+                raise ValueError(
+                    'Requires scalar labels. \n' + str(e))
 
-    #-------Random Unsupervised-------#
-    labels = list(range(ways))
-    for i in range(len(dataset)):
-        l = random.choice(labels)
+            labels_to_indices[label].append(i)
+            indices_to_labels[i] = label
+    else:
+        #-------Random Unsupervised-------#
+        labels = list(range(ways))
+        for i in range(len(dataset)):
+            l = random.choice(labels)
 
-        labels_to_indices[l].append(i)
-        indices_to_labels[i] = l
-
-    #------- Original (Supervised) ---#
-    # for i in range(len(dataset)):
-    #     try:
-    #         label = dataset[i][1]
-    #         # if label is a Tensor, then take get the scalar value
-    #         if hasattr(label, 'item'):
-    #             label = dataset[i][1].item()
-    #     except ValueError as e:
-    #         raise ValueError(
-    #             'Requires scalar labels. \n' + str(e))
-
-    #     labels_to_indices[label].append(i)
-    #     indices_to_labels[i] = label
+            labels_to_indices[l].append(i)
+            indices_to_labels[i] = l
 
     dataset.labels_to_indices = labels_to_indices
     dataset.indices_to_labels = indices_to_labels
