@@ -72,3 +72,50 @@ class LinearReg(nn.Module):
         loss_reg /= weight.size(0)
 
         return loss_reg*self.c_omega
+
+
+
+class GroupMask(object):
+    """docstring for GroupMask"""
+    def __init__(self, c_theta, threshold=5e-4, num_layers=4, i_beta=0.1, f_beta=0.8):
+        super(GroupMask, self).__init__()
+        self.threshold = threshold
+        self.beta = np.linspace(i_beta, f_beta, num = num_layers+1)
+        self.c_theta = c_theta
+
+    def getRegLayer(self, model):
+        reg_theta = 0
+        for j,layer in enumerate(model.base):
+
+            reg_theta += layer.conv.weight.norm(2)*max(0.5,(1 - self.beta[j]))/2 #weight decay
+        
+            sizes = layer.conv.weight.size()
+            temp = layer.conv.weight.view(sizes[0],-1)
+
+            temp = temp.norm(2,1)
+            #reg_theta += temp.sum()*(self.beta[j])
+            reg_theta += temp[ temp > self.threshold ].sum()*(self.beta[j]) #l2,1
+
+        return reg_theta
+
+    def getMasks(self, model):
+        masks = []
+        #counts_filter = []
+        for elem in model.base:
+            sizes = elem.conv.size()
+            temp = elem.weight.view(sizes[0],-1)
+            temp = temp.norm(2,1)
+
+            mask = (temp <= self.threshold).type(torch.FloatTensor).to(device)
+            masks.append(mask.view(-1,1,1,1))
+
+        return masks
+
+    def setGradZero(self, model, mask):
+        for j, elem in enumerate(model.base):
+            elem.conv.weight.grad.mul_(mask[j])
+            elem.conv.bias.grad.mul_(mask[j])
+
+            module.weight.grad.mul_(mask[j])
+            module.bias.grad.mul_(mask[j])
+        

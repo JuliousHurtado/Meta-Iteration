@@ -1,7 +1,7 @@
 import torch
 from torch.nn import functional as F
 
-def trainingProcessTask(data_loader, learner, loss, optimizer, regs, device, ewc = None):
+def trainingProcessTask(data_loader, learner, loss, optimizer, regs, device):
     learner.train()
     running_loss = 0.0
     running_corrects = 0.0
@@ -19,9 +19,6 @@ def trainingProcessTask(data_loader, learner, loss, optimizer, regs, device, ewc
         if len(regs) > 0:
             for reg in regs:
                 l += reg(learner)
-
-        if ewc is not None:
-            l += ewc.penalty(learner)
 
         l.backward()
         optimizer.step()

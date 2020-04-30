@@ -118,14 +118,14 @@ class MiniImagenetCNN(nn.Module):
                              layers=layers,
                              max_pool_factor=4 // layers,
                              task_normalization=task_normalization)
-        self.linear = nn.Linear(16 * hidden_size, output_size, bias=True)
+        self.linear = nn.Linear(25 * hidden_size, output_size, bias=True)
         maml_init_(self.linear)
         self.hidden_size = hidden_size
         self.layers = layers
 
     def forward(self, x):
         x = self.base(x)
-        x = self.linear(x.view(x.size(0), 16 * self.hidden_size))
+        x = self.linear(x.view(x.size(0), 25 * self.hidden_size))
         return x
 
     def setTaskNormalizationLayer(self, layers):
@@ -140,7 +140,7 @@ class MiniImagenetCNN(nn.Module):
 
 
 class TaskManager(nn.Module):
-    def __init__(self, outputs_size, hidden_size=32, layers=4, task_normalization=False, device = 'cpu'):
+    def __init__(self, outputs_size, ways=5, hidden_size=32, layers=4, task_normalization=False, device = 'cpu'):
         super(TaskManager, self).__init__()
         """
         outputs_size -> Is a list of the amount of classes for the different tasks, 
@@ -150,17 +150,19 @@ class TaskManager(nn.Module):
         """
         self.task = {}
         self.task_normalization = task_normalization
-
         for i,out in enumerate(outputs_size):
             norm_layers = []
             if i != 0 and task_normalization:
                 for _ in range(layers): 
                     norm_layers.append(TaskNormalization(hidden_size, hidden_size).to(device))
-            linear_layer = nn.Linear(16 * hidden_size, out).to(device)
+            linear_layer = nn.Linear(25 * hidden_size, out).to(device)
 
             self.task[i] = { 'norm': norm_layers, 'linear': linear_layer }
 
-        self.model = MiniImagenetCNN(outputs_size[0], hidden_size=hidden_size, layers=layers, task_normalization=task_normalization)
+        self.task['meta'] = {'linear': nn.Linear(25 * hidden_size, ways).to(device)}
+        self.model = MiniImagenetCNN(ways, hidden_size=hidden_size, layers=layers, task_normalization=task_normalization)
+
+        self.setLinearLayer('meta')
 
     def setLinearLayer(self, task):
         self.model.setLinearLayer(self.task[task]['linear'])

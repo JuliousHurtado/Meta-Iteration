@@ -1,12 +1,8 @@
-#!/usr/bin/env python3
-import torch
-import torch.nn as nn
+import traceback
 from torch.autograd import grad
 
 from learn2learn.algorithms.base_learner import BaseLearner
 from learn2learn.utils import clone_module
-
-from model.models import TaskNormalization
 
 
 def maml_update(model, lr, grads=None):
@@ -31,7 +27,6 @@ def maml_update(model, lr, grads=None):
     maml_update(model, lr=0.1, grads)
     ~~~
     """
-
     if grads is not None:
         params = list(model.parameters())
         if not len(grads) == len(list(params)):
@@ -39,8 +34,7 @@ def maml_update(model, lr, grads=None):
             msg += str(len(params)) + ' vs ' + str(len(grads)) + ')'
             print(msg)
         for p, g in zip(params, grads):
-            if p.grad is not None:
-                p.grad = g
+            p.grad = g
 
     # Update the params
     for param_key in model._parameters:
@@ -59,6 +53,11 @@ def maml_update(model, lr, grads=None):
         model._modules[module_key] = maml_update(model._modules[module_key],
                                                  lr=lr,
                                                  grads=None)
+
+    # Finally, rebuild the flattened parameters for RNNs
+    # See this issue for more details:
+    # https://github.com/learnables/learn2learn/issues/139
+    model._apply(lambda x: x)
     return model
 
 
@@ -67,7 +66,7 @@ class MAML(BaseLearner):
     [[Source]](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/maml.py)
     **Description**
     High-level implementation of *Model-Agnostic Meta-Learning*.
-    This class wraps an arbitrary nn.Module and augments it with `clone()` and `adapt`
+    This class wraps an arbitrary nn.Module and augments it with `clone()` and `adapt()`
     methods.
     For the first-order version of MAML (i.e. FOMAML), set the `first_order` flag to `True`
     upon initialization.
@@ -76,8 +75,10 @@ class MAML(BaseLearner):
     * **lr** (float) - Fast adaptation learning rate.
     * **first_order** (bool, *optional*, default=False) - Whether to use the first-order
         approximation of MAML. (FOMAML)
-    * **allow_unused** (bool, *optional*, default=False) - Whether to allow differentiation
-        of unused parameters.
+    * **allow_unused** (bool, *optional*, default=None) - Whether to allow differentiation
+        of unused parameters. Defaults to `allow_nograd`.
+    * **allow_nograd** (bool, *optional*, default=False) - Whether to allow adaptation with
+        parameters that have `requires_grad = False`.
     **References**
     1. Finn et al. 2017. "Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks."
     **Example**
@@ -91,47 +92,83 @@ class MAML(BaseLearner):
     ~~~
     """
 
-    def __init__(self, model, lr,first_order=False, allow_unused=False):
+    def __init__(self,
+                 model,
+                 lr,
+                 first_order=False,
+                 allow_unused=None,
+                 allow_nograd=False):
         super(MAML, self).__init__()
         self.module = model
         self.lr = lr
         self.first_order = first_order
+        self.allow_nograd = allow_nograd
+        if allow_unused is None:
+            allow_unused = allow_nograd
         self.allow_unused = allow_unused
 
     def forward(self, *args, **kwargs):
         return self.module(*args, **kwargs)
 
-    def adapt(self, loss, first_order=None, allow_unused=None):
+    def adapt(self,
+              loss,
+              first_order=None,
+              allow_unused=None,
+              allow_nograd=None):
         """
         **Description**
-        Updates the clone parameters in place using the MAML update.
+        Takes a gradient step on the loss and updates the cloned parameters in place.
         **Arguments**
         * **loss** (Tensor) - Loss to minimize upon update.
         * **first_order** (bool, *optional*, default=None) - Whether to use first- or
             second-order updates. Defaults to self.first_order.
         * **allow_unused** (bool, *optional*, default=None) - Whether to allow differentiation
-        of unused parameters. Defaults to self.allow_unused.
+            of unused parameters. Defaults to self.allow_unused.
+        * **allow_nograd** (bool, *optional*, default=None) - Whether to allow adaptation with
+            parameters that have `requires_grad = False`. Defaults to self.allow_nograd.
         """
         if first_order is None:
             first_order = self.first_order
         if allow_unused is None:
             allow_unused = self.allow_unused
+        if allow_nograd is None:
+            allow_nograd = self.allow_nograd
         second_order = not first_order
-        params = []
-        self.parametersMAML(self.module, params)
-        gradients = grad(loss,
-                         #self.module.parameters(),
-                         #self.getParams(),
-                         params,
-                         retain_graph=second_order,
-                         create_graph=second_order,
-                         allow_unused=allow_unused)
 
-        grads = []
-        self.completeGradient(self.module, gradients, grads)
-        self.module = maml_update(self.module, self.lr, grads)
+        if allow_nograd:
+            # Compute relevant gradients
+            diff_params = [p for p in self.module.parameters() if p.requires_grad]
+            grad_params = grad(loss,
+                               diff_params,
+                               retain_graph=second_order,
+                               create_graph=second_order,
+                               allow_unused=allow_unused)
+            gradients = []
+            grad_counter = 0
 
-    def clone(self, first_order=None, allow_unused=None):
+            # Handles gradients for non-differentiable parameters
+            for param in self.module.parameters():
+                if param.requires_grad:
+                    gradient = grad_params[grad_counter]
+                    grad_counter += 1
+                else:
+                    gradient = None
+                gradients.append(gradient)
+        else:
+            try:
+                gradients = grad(loss,
+                                 self.module.parameters(),
+                                 retain_graph=second_order,
+                                 create_graph=second_order,
+                                 allow_unused=allow_unused)
+            except RuntimeError:
+                traceback.print_exc()
+                print('learn2learn: Maybe try with allow_nograd=True and/or allow_unused=True ?')
+
+        # Update the module
+        self.module = maml_update(self.module, self.lr, gradients)
+
+    def clone(self, first_order=None, allow_unused=None, allow_nograd=None):
         """
         **Description**
         Returns a `MAML`-wrapped copy of the module whose parameters and buffers
@@ -144,68 +181,17 @@ class MAML(BaseLearner):
             or second-order updates. Defaults to self.first_order.
         * **allow_unused** (bool, *optional*, default=None) - Whether to allow differentiation
         of unused parameters. Defaults to self.allow_unused.
+        * **allow_nograd** (bool, *optional*, default=False) - Whether to allow adaptation with
+            parameters that have `requires_grad = False`. Defaults to self.allow_nograd.
         """
         if first_order is None:
             first_order = self.first_order
         if allow_unused is None:
             allow_unused = self.allow_unused
+        if allow_nograd is None:
+            allow_nograd = self.allow_nograd
         return MAML(clone_module(self.module),
                     lr=self.lr,
                     first_order=first_order,
-                    allow_unused=allow_unused)
-
-    def setLinearLayer(self, task):
-        self.module.setLinearLayer(task)
-
-    def setTaskNormalizationLayer(self, task):
-        self.module.setTaskNormalizationLayer(task)
-
-    def parametersMAML(self, network, all_layers):
-        for layer in network.children():
-            if isinstance(layer, torch.nn.Conv2d) or isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.Linear):
-                for p in layer.parameters():
-                    all_layers.append(p)
-            if list(layer.children()) != [] and not isinstance(layer, TaskNormalization): # if leaf node, add it to list
-                self.parametersMAML(layer, all_layers)
-
-    def completeGradient(self, network, gradients, grads=[], count=0):
-        for layer in network.children():
-            if isinstance(layer, torch.nn.Conv2d) or isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.Linear):
-                for _ in layer.parameters():
-                    grads.append(gradients[count])
-                    count += 1
-            
-            if isinstance(layer, TaskNormalization):
-                for p in layer.parameters():
-                    p.grad = torch.zeros_like(p)
-                    grads.append(torch.zeros_like(p))
-
-            if list(layer.children()) != [] and not isinstance(layer, TaskNormalization):
-                self.completeGradient(layer, gradients, grads, count)
-
-    # def getParams(self):
-    #     if len(self.freeze_layer) == 0:
-    #         return self.module.parameters()
-    #     else:
-    #         params = []
-    #         for name, param in self.module.named_parameters():
-    #             if name[5] == 'r' or int(name[5]) not in self.freeze_layer:
-    #                 params.append(param)
-
-    #         return params
-
-    # def completeGradient(self, gradients):
-    #     if len(self.freeze_layer) == 0:
-    #         return gradients
-    #     else:
-    #         grads = []
-    #         i = 0
-    #         for name, param in self.module.named_parameters():
-    #             if name[5] == 'r' or int(name[5]) not in self.freeze_layer:
-    #                 grads.append(gradients[i])
-    #                 i += 1
-    #             else:
-    #                 grads.append(torch.zeros_like(param))
-
-
-    #         return grads
+                    allow_unused=allow_unused,
+                    allow_nograd=allow_nograd)
