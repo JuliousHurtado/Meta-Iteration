@@ -64,11 +64,11 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
         addResults(model, data_generators, results, device, i, False, True)
 
         if args.save_model:
-            name_file = '{}/{}_{}_{}_{}_{}'.format('results', 'temp', args.meta_warmup, args.meta_learn, args.task_warmup, args.task_complete)
+            name_file = '{}/{}_{}_{}_{}'.format('results', args.dataset, task, args.meta_learn, args.task_normalization)
             saveValues(name_file, results, model.module, args)
 
     if args.save_model:
-        name_file = '{}/{}_{}_{}_{}_{}'.format('results', str(time.time()), args.meta_warmup, args.meta_learn, args.task_warmup, args.task_complete)
+        name_file = '{}/{}_{}_{}_{}_{}'.format('results', 'final', args.dataset, args.meta_learn, args.task_normalization, str(time.time()))
         saveValues(name_file, results, model.module, args)
 
 if __name__ == '__main__':
