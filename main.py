@@ -59,17 +59,17 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
             results[i]['train_acc'].append(acc_task)            
             print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i+1), flush=True)
             
-        #     addResults(model, data_generators, results, device, i, False)
+            addResults(model, data_generators, results, device, i, False)
 
-        # addResults(model, data_generators, results, device, i, False, True)
+        addResults(model, data_generators, results, device, i, False, True)
 
-    #     if args.save_model:
-    #         name_file = '{}/{}_{}_{}_{}_{}'.format('results', 'temp', args.meta_warmup, args.meta_learn, args.task_warmup, args.task_complete)
-    #         saveValues(name_file, results, model.module, args)
+        if args.save_model:
+            name_file = '{}/{}_{}_{}_{}_{}'.format('results', 'temp', args.meta_warmup, args.meta_learn, args.task_warmup, args.task_complete)
+            saveValues(name_file, results, model.module, args)
 
-    # if args.save_model:
-    #     name_file = '{}/{}_{}_{}_{}_{}'.format('results', str(time.time()), args.meta_warmup, args.meta_learn, args.task_warmup, args.task_complete)
-    #     saveValues(name_file, results, model.module, args)
+    if args.save_model:
+        name_file = '{}/{}_{}_{}_{}_{}'.format('results', str(time.time()), args.meta_warmup, args.meta_learn, args.task_warmup, args.task_complete)
+        saveValues(name_file, results, model.module, args)
 
 if __name__ == '__main__':
     parser = getArguments()

@@ -59,16 +59,16 @@ def getArguments():
     #---------------------Model------------------------------------#
     parser.add_argument('--hidden-size', type=int, default=32)
     parser.add_argument('--num-layers', type=int, default=4)
-    parser.add_argument('--task-normalization', type=str2bool, default=False)
+    parser.add_argument('--task-normalization', type=str2bool, default=True)
 
     #---------------------Regularization---------------------------#
     
     #---------------------Extras-----------------------------------#
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--epochs', type=int, default=80)
-    parser.add_argument('--batch-size', type=int, default=32)
+    parser.add_argument('--epochs', type=int, default=60)
+    parser.add_argument('--batch-size', type=int, default=64)
     parser.add_argument('--lr', type=float, default=0.003)
-    parser.add_argument('--num-data', type=int, default=50)
+    parser.add_argument('--num-data', type=int, default=-1)
     parser.add_argument('--save-model', type=str2bool, default=True)
     parser.add_argument('--meta-learn', type=str2bool, default=True)
 

@@ -152,7 +152,7 @@ class TaskManager(nn.Module):
         self.task_normalization = task_normalization
         for i,out in enumerate(outputs_size):
             norm_layers = []
-            if i != 0 and task_normalization:
+            if task_normalization:
                 for _ in range(layers): 
                     norm_layers.append(TaskNormalization(hidden_size, hidden_size).to(device))
             linear_layer = nn.Linear(25 * hidden_size, out).to(device)
