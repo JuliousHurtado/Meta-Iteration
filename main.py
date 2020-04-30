@@ -45,7 +45,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
 
         for e in range(args.epochs):
 
-            if args.meta_learn:
+            if args.meta_learn and e % 5 == 0:
                 opti_meta = adjustModelTask(model, 'meta', lr, norm=False)            
                 loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], meta_reg, device)
                 results[i]['meta_loss'].append(loss_meta)
@@ -64,7 +64,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
         addResults(model, data_generators, results, device, i, False, True)
 
         if args.save_model:
-            name_file = '{}/{}_{}_{}_{}_{}'.format('results', args.dataset, task, args.meta_learn, args.task_normalization, args.meta_label)
+            name_file = '{}/{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label)
             saveValues(name_file, results, model.module, args)
 
     if args.save_model:
