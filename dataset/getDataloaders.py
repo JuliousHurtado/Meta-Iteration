@@ -157,7 +157,7 @@ def create_bookkeeping(dataset, ways, meta_label):
         for i in range(len(dataset)):
             angle = random.choice(angles)
             img = Image.fromarray(dataset.data[i])
-            new_img = np.array(F.rotate(img, angle, False, False, None, None))
+            new_img = np.array(F.rotate(img, angle))
             label = angles.index(angle)
 
             data.append(new_img)
