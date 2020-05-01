@@ -17,6 +17,14 @@ def checkParamsSum(model):
     for n,p in model.named_parameters():
         params[n] = p.sum()
 
+def stringRegUsed(regs, t='meta'):
+    s = t
+
+    for k in regs:
+        s = s + '_' + k + '_' + str(regs[k])[0]
+
+    return s
+
 def adjustModelTask(model, task, lr, linear=True, norm=True):
     if linear:
         model.setLinearLayer(task)
@@ -47,7 +55,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
 
             if args.meta_learn and e % 5 == 0:
                 opti_meta = adjustModelTask(model, 'meta', lr, norm=False)            
-                loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], meta_reg, device)
+                loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], meta_reg['reg'], device)
                 results[i]['meta_loss'].append(loss_meta)
                 results[i]['meta_acc'].append(acc_meta)
                 print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))
@@ -64,11 +72,11 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
         addResults(model, data_generators, results, device, i, False, True)
 
         if args.save_model:
-            name_file = '{}/{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label)
+            name_file = '{}/{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']))
             saveValues(name_file, results, model.module, args)
 
     if args.save_model:
-        name_file = '{}/{}_{}_{}_{}_{}_{}'.format('results', 'final', args.dataset, args.meta_learn, args.task_normalization, args.meta_label, str(time.time()))
+        name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', 'final', args.dataset, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), str(time.time()))
         saveValues(name_file, results, model.module, args)
 
 if __name__ == '__main__':
@@ -97,9 +105,9 @@ if __name__ == '__main__':
     model = getModel(args, cls_per_task, device)
     meta_model = getMetaAlgorithm(model, args.fast_lr, args.first_order)
 
-    regs = getMetaRegularizer( 
+    meta_regs = getMetaRegularizer( 
                     args.meta_reg_filter, args.cost_theta,
                     args.meta_reg_linear, args.cost_omega,
                     args.meta_reg_sparse)
 
-    main(args, data_generators, meta_model, device, [], [])
+    main(args, data_generators, meta_model, device, meta_regs, [])

@@ -21,16 +21,20 @@ def getMetaAlgorithm(model, fast_lr, first_order):
     return MAML(model, lr=fast_lr, first_order=first_order)
     
 def getMetaRegularizer(convFilter, c_theta, linearReg, c_omega, sparseFilter):
-    regularizator = []
+    use_meta_reg = {'linear': False, 'filter': False, 'sparse': False}
+    regs = []
 
     if convFilter:
-        regularizator.append(FilterReg(c_theta))
+        regs.append(FilterReg(c_theta))
+        use_meta_reg['filter'] = True
     if linearReg:
-        regularizator.append(LinearReg(c_omega))
+        regs.append(LinearReg(c_omega))
+        use_meta_reg['linear'] = True
     if sparseFilter:
-        regularizator.append(FilterSparseReg(c_theta))
+        regs.append(FilterSparseReg(c_theta))
+        use_meta_reg['sparse'] = True
 
-    return regularizator
+    return {'reg': regs, 'use': use_meta_reg}
 
 def getTaskRegularizer(task_reg):
     reg_used = {'ewc': False, 'gs_mask': False, 'mas': False, 'si': False}
