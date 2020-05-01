@@ -1,3 +1,5 @@
+import copy
+
 import torch
 from torch.nn import functional as F
 
@@ -16,11 +18,14 @@ def trainingProcessTask(data_loader, learner, loss, optimizer, regs, device):
         _, preds = torch.max(out, 1)
         l = loss(out, labels)
 
-        if len(regs) > 0:
-            for reg in regs:
-                l += reg(learner)
+        if regs['reg']:
+            l += regs['reg'](learner)
 
         l.backward()
+
+        if regs['use']['gs_mask']:
+            regs['reg'].setGradZero(learner)
+
         optimizer.step()
 
         running_loss += l.item()
@@ -38,15 +43,34 @@ def test_normal(model, data_loader, device):
         correct += (F.softmax(output, dim=1).max(dim=1)[1] == target).data.sum()
     return correct.item() / len(data_loader.dataset)
 
-def addResults(model, data_generators, results, device, task, all_tasks=False, final_acc=False):
+def test_normal_masks(model, data_loader, device, masks):
+    temp_model = copy.deepcopy(model.model)
+
+    temp_model.eval()
+    correct = 0
+    for input, target in data_loader:
+        input, target = input.to(device), target.long().to(device)
+        output = temp_model(input)
+        correct += (F.softmax(output, dim=1).max(dim=1)[1] == target).data.sum()
+    return correct.item() / len(data_loader.dataset)
+
+def addResults(model, data_generators, results, device, task, all_tasks=False, final_acc=False, masks=None):
     if all_tasks:
-        for j in range(task):
+        for j in range(task+1):
             test_accuracy = test_normal(model, data_generators[j]['val'], device)
             results[j]['test_acc'].append(test_accuracy)
     else:
         test_accuracy = test_normal(model, data_generators[task]['val'], device)
+        results[task]['test_acc'].append(test_accuracy)
 
     if final_acc:
-        for j in range(task):
-            test_accuracy = test_normal(model, data_generators[j]['val'], device)
+        for j in range(task+1):
+            model.setLinearLayer(j)
+            model.setTaskNormalizationLayer(j)
+
+            if masks:
+                test_accuracy = test_normal_masks(model, data_generators[j]['val'], device, masks[j])
+            else:
+                test_accuracy = test_normal(model, data_generators[j]['val'], device)
+            
             results[j]['final_acc'].append(test_accuracy)

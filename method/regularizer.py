@@ -82,10 +82,11 @@ class GroupMask(object):
         self.threshold = threshold
         self.beta = np.linspace(i_beta, f_beta, num = num_layers+1)
         self.c_theta = c_theta
+        self.masks = None
 
     def __call__(self, model):
         reg_theta = 0
-        for j,layer in enumerate(model.base):
+        for j,layer in enumerate(model.model.base):
 
             reg_theta += layer.conv.weight.norm(2)*max(0.5,(1 - self.beta[j]))/2 #weight decay
         
@@ -96,26 +97,29 @@ class GroupMask(object):
             #reg_theta += temp.sum()*(self.beta[j])
             reg_theta += temp[ temp > self.threshold ].sum()*(self.beta[j]) #l2,1
 
-        return reg_theta
+        return reg_theta * self.c_theta
 
-    def getMasks(self, model):
+    def setMasks(self, model):
         masks = []
         #counts_filter = []
-        for elem in model.base:
-            sizes = elem.conv.size()
-            temp = elem.weight.view(sizes[0],-1)
+        for elem in model.model.base:
+            sizes = elem.conv.weight.size()
+            temp = elem.conv.weight.view(sizes[0],-1)
             temp = temp.norm(2,1)
 
-            mask = (temp <= self.threshold).type(torch.FloatTensor).to(device)
-            masks.append(mask.view(-1,1,1,1))
+            mask = (temp <= self.threshold).type(torch.FloatTensor).to(temp.device)
+            masks.append(mask)
 
-        return masks
+        self.masks = masks
 
-    def setGradZero(self, model, mask):
-        for j, elem in enumerate(model.base):
-            elem.conv.weight.grad.mul_(mask[j])
-            elem.conv.bias.grad.mul_(mask[j])
+    def setGradZero(self, model):
+        if self.masks is None:
+            return None
 
-            module.weight.grad.mul_(mask[j])
-            module.bias.grad.mul_(mask[j])
+        for j, elem in enumerate(model.model.base):
+            elem.conv.weight.grad.mul_(self.masks[j].view(-1,1,1,1))
+            elem.conv.bias.grad.mul_(self.masks[j])
+
+            elem.normalize.weight.grad.mul_(self.masks[j])
+            elem.normalize.bias.grad.mul_(self.masks[j])
         

@@ -58,9 +58,9 @@ class ConvBlock(nn.Module):
                                         affine=True,
                                         # eps=1e-3,
                                         # momentum=0.999,
-                                        # track_running_stats=False,
+                                        track_running_stats=False,
                                         )
-        nn.init.uniform_(self.normalize.weight)
+        #nn.init.uniform_(self.normalize.weight)
         self.relu = nn.ReLU()
         if task_normalization:
             self.taskNormalization = TaskNormalization(out_channels, out_channels)
@@ -81,6 +81,7 @@ class ConvBlock(nn.Module):
         x = self.relu(x)
         x = self.taskNormalization(x)
         x = self.max_pool(x)
+
         return x
 
 class ConvBase(nn.Sequential):
@@ -173,3 +174,13 @@ class TaskManager(nn.Module):
 
     def forward(self, x):
         return self.model(x)
+
+    def setMasks(self, masks):
+        useful.append(((m - 1) == -1).type(torch.FloatTensor).to(device))
+        for j, elem in enumerate(self.model.base):
+            m = ((masks[j] - 1) == -1).type(torch.FloatTensor).to(masks[j].device)
+            elem.conv.weight.grad.mul_(m.view(-1,1,1,1))
+            elem.conv.bias.grad.mul_(m)
+
+            elem.normalize.weight.grad.mul_(m)
+            elem.normalize.bias.grad.mul_(m)

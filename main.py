@@ -1,12 +1,13 @@
 import torch
 import random
 import time
+import copy
 import numpy as np
 from torch import nn
 from torch import optim
 
 from model.models import TaskNormalization
-from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaRegularizer
+from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaRegularizer, getTaskRegularizer
 from dataset.getDataloaders import getTinyImageNet, getRandomDataset, getDividedCifar10
 from train.meta_training import trainingProcessMeta
 from train.task_training import trainingProcessTask, addResults
@@ -31,11 +32,13 @@ def adjustModelTask(model, task, lr, linear=True, norm=True):
     if norm: 
         model.setTaskNormalizationLayer(task)
     
-    return optim.Adam(model.parameters(), lr)
+    return optim.SGD(model.parameters(), lr, momentum=0.0, weight_decay=0.0)
 
 def main(args, data_generators, model, device, meta_reg, task_reg):
     lr = args.lr
     loss = nn.CrossEntropyLoss(reduction='mean')
+
+    masks = {}
 
     results = {}
     for i in range(len(data_generators)):
@@ -69,7 +72,11 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
             
             addResults(model, data_generators, results, device, i, False)
 
-        addResults(model, data_generators, results, device, i, False, True)
+        if task_reg['use']['gs_mask']:
+            task_reg['reg'].setMasks(model)
+            masks[i] = copy.deepcopy(task_reg['reg'].masks)
+
+        addResults(model, data_generators, results, device, i, False, True, masks)
 
         if args.save_model:
             name_file = '{}/{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']))
@@ -78,6 +85,9 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
     if args.save_model:
         name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', 'final', args.dataset, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), str(time.time()))
         saveValues(name_file, results, model.module, args)
+
+    for i in range(len(data_generators)):
+        print(results[i]['final_acc'])
 
 if __name__ == '__main__':
     parser = getArguments()
@@ -110,4 +120,9 @@ if __name__ == '__main__':
                     args.meta_reg_linear, args.cost_omega,
                     args.meta_reg_sparse)
 
-    main(args, data_generators, meta_model, device, meta_regs, [])
+    task_regs = getTaskRegularizer(
+                    args.task_reg, args.ewc_importance,
+                    args.reg_theta, args.reg_lambda,
+                    args.reg_sparse)
+
+    main(args, data_generators, meta_model, device, meta_regs, task_regs)

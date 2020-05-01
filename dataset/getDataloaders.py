@@ -43,7 +43,7 @@ def getTinyImageNet(args):
         val_dataset = splitDataset(args.val_dataset, selected_classes, data_transforms['val'])
 
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
         meta_loader = None
         if args.meta_learn or args.meta_warmup:
@@ -71,7 +71,7 @@ def getRandomDataset(args):
         cls_per_task.append(10)
         train_dataset = RandomSet()
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-        val_loader = torch.utils.data.DataLoader(RandomSet(), batch_size=args.batch_size, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(RandomSet(), batch_size=args.batch_size, shuffle=False)
         meta_loader = None
         if args.meta_learn or args.meta_warmup:
             create_bookkeeping(train_dataset, args.ways, args.meta_label)
@@ -131,7 +131,7 @@ def getDividedCifar10(args):
                                            task_transforms=meta_transforms)
         
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
         data_loader.append({ 'train': train_loader, 'val': val_loader, 'meta': meta_loader})
         cls_per_task.append(len(labels[task]))

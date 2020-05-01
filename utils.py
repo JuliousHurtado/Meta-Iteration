@@ -36,16 +36,16 @@ def getMetaRegularizer(convFilter, c_theta, linearReg, c_omega, sparseFilter):
 
     return {'reg': regs, 'use': use_meta_reg}
 
-def getTaskRegularizer(task_reg):
+def getTaskRegularizer(task_reg, ewc_importance, c_theta, c_lambda, c_sparse):
     reg_used = {'ewc': False, 'gs_mask': False, 'mas': False, 'si': False}
     reg_used[task_reg] = True
 
     reg = None
     if task_reg == 'ewc':
-        reg = EWC
+        pass
 
     if task_reg == 'gs_mask':
-        pass
+        reg = GroupMask(c_theta)
 
     if task_reg == 'mas':
         pass
@@ -53,7 +53,7 @@ def getTaskRegularizer(task_reg):
     if task_reg == 'si':
         pass
 
-    return reg, reg_used
+    return { 'reg': reg, 'use': reg_used}
 
 #--------------------------Args-----------------------------------#
 def str2bool(v):
