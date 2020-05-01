@@ -7,7 +7,10 @@ import learn2learn as l2l
 
 from model.models import MiniImagenetCNN, TaskManager
 from method.maml import MAML
-from method.regularizer import FilterReg, LinearReg, FilterSparseReg
+from method.regularizer import FilterReg, LinearReg, FilterSparseReg, GroupMask
+# from method.ewc import EWC
+# from method.MAS import MAS
+
 
 #--------------------------Load Model------------------------------#
 def getModel(args, cls_per_task, device):
@@ -17,7 +20,7 @@ def getModel(args, cls_per_task, device):
 def getMetaAlgorithm(model, fast_lr, first_order):
     return MAML(model, lr=fast_lr, first_order=first_order)
     
-def getRegularizer(convFilter, c_theta, linearReg, c_omega, sparseFilter):
+def getMetaRegularizer(convFilter, c_theta, linearReg, c_omega, sparseFilter):
     regularizator = []
 
     if convFilter:
@@ -28,6 +31,25 @@ def getRegularizer(convFilter, c_theta, linearReg, c_omega, sparseFilter):
         regularizator.append(FilterSparseReg(c_theta))
 
     return regularizator
+
+def getTaskRegularizer(task_reg):
+    reg_used = {'ewc': False, 'gs_mask': False, 'mas': False, 'si': False}
+    reg_used[task_reg] = True
+
+    reg = None
+    if task_reg == 'ewc':
+        reg = EWC
+
+    if task_reg == 'gs_mask':
+        pass
+
+    if task_reg == 'mas':
+        pass
+
+    if task_reg == 'si':
+        pass
+
+    return reg, reg_used
 
 #--------------------------Args-----------------------------------#
 def str2bool(v):
@@ -63,7 +85,18 @@ def getArguments():
     parser.add_argument('--task-normalization', type=str2bool, default=True)
 
     #---------------------Regularization---------------------------#
-    
+    parser.add_argument('--meta-reg-linear', type=str2bool, default=False)
+    parser.add_argument('--cost-omega', type=float, default=0.01)
+    parser.add_argument('--meta-reg-filter', type=str2bool, default=False)
+    parser.add_argument('--meta-reg-sparse', type=str2bool, default=False)
+    parser.add_argument('--cost-theta', type=float, default=0.01)
+
+    parser.add_argument('--task-reg', type=str, default='', choices=['','ewc', 'mas', 'si', 'gs_mask'])
+    parser.add_argument('--ewc-importance', type=float, default=100)
+    parser.add_argument('--reg-theta', type=float, default=0.05)
+    parser.add_argument('--reg-lambda', type=float, default=0.1)
+    parser.add_argument('--reg-sparse', type=float, default=0.001)
+
     #---------------------Extras-----------------------------------#
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--epochs', type=int, default=60)

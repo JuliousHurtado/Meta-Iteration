@@ -6,7 +6,7 @@ from torch import nn
 from torch import optim
 
 from model.models import TaskNormalization
-from utils import getArguments, getModel, getMetaAlgorithm, saveValues
+from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaRegularizer
 from dataset.getDataloaders import getTinyImageNet, getRandomDataset, getDividedCifar10
 from train.meta_training import trainingProcessMeta
 from train.task_training import trainingProcessTask, addResults
@@ -97,12 +97,9 @@ if __name__ == '__main__':
     model = getModel(args, cls_per_task, device)
     meta_model = getMetaAlgorithm(model, args.fast_lr, args.first_order)
 
-    # all_layers = []
-    # parametersTask(meta_model.module, all_layers)
-    # print(all_layers)
-    # regs = getRegularizer( 
-    #                 args.filter_reg, args.cost_theta,
-    #                 args.linear_reg, args.cost_omega,
-    #                 args.sparse_reg)
+    regs = getMetaRegularizer( 
+                    args.meta_reg_filter, args.cost_theta,
+                    args.meta_reg_linear, args.cost_omega,
+                    args.meta_reg_sparse)
 
     main(args, data_generators, meta_model, device, [], [])

@@ -83,7 +83,7 @@ class GroupMask(object):
         self.beta = np.linspace(i_beta, f_beta, num = num_layers+1)
         self.c_theta = c_theta
 
-    def getRegLayer(self, model):
+    def __call__(self, model):
         reg_theta = 0
         for j,layer in enumerate(model.base):
 
