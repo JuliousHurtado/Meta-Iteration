@@ -63,7 +63,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
                 results[i]['meta_acc'].append(acc_meta)
                 print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))
 
-                #opti = adjustModelTask(model, i, lr)  
+                adjustModelTask(model, i, lr)  
             
             loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, loss, opti, task_reg, device) 
             results[i]['train_loss'].append(loss_task)
