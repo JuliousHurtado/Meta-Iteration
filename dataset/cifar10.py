@@ -72,7 +72,7 @@ class DatasetGen(object):
             train_split, valid_split = torch.utils.data.random_split(train_dataset, [len(train_dataset) - split, split])
 
             if self.args.meta_learn:
-                meta_dataset = copy.deepcopy(train_split)
+                meta_dataset = copy.deepcopy(train_dataset)
                 meta_loader = self.get_meta_loader(meta_dataset)
             else:
                 meta_loader = None

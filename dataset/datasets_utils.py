@@ -2,6 +2,8 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+#
+# https://github.com/facebookresearch/Adversarial-Continual-Learning
 
 from __future__ import print_function
 import os.path
@@ -24,7 +26,7 @@ from torchvision import datasets, transforms
 
 # from scipy.imageio import imread
 import pandas as pd
-
+import errno
 import os
 import torch
 from PIL import Image
@@ -33,14 +35,72 @@ from collections import defaultdict
 from itertools import chain
 from collections import OrderedDict
 
+import functools
 
+
+def check_integrity(fpath, md5=None):
+    if not os.path.isfile(fpath):
+        return False
+    if md5 is None:
+        return True
+    return check_md5(fpath, md5)
+
+
+def makedir_exist_ok(dirpath):
+    """
+    Python2 support for os.makedirs(.., exist_ok=True)
+    """
+    try:
+        os.makedirs(dirpath)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            pass
+        else:
+            raise
+
+
+def download_url(url, root, filename=None, md5=None):
+    """Download a file from a url and place it in root.
+    Args:
+        url (str): URL to download file from
+        root (str): Directory to place downloaded file in
+        filename (str, optional): Name to save the file under. If None, use the basename of the URL
+        md5 (str, optional): MD5 checksum of the download. If None, do not check
+    """
+    from six.moves import urllib
+
+    root = os.path.expanduser(root)
+    if not filename:
+        filename = os.path.basename(url)
+    fpath = os.path.join(root, filename)
+
+    makedir_exist_ok(root)
+
+    # downloads file
+    if check_integrity(fpath, md5):
+        print('Using downloaded and verified file: ' + fpath)
+    else:
+        try:
+            print('Downloading ' + url + ' to ' + fpath)
+            urllib.request.urlretrieve(
+                url, fpath
+            )
+        except (urllib.error.URLError, IOError) as e:
+            if url[:5] == 'https':
+                url = url.replace('https:', 'http:')
+                print('Failed download. Trying https -> http instead.'
+                      ' Downloading ' + url + ' to ' + fpath)
+                urllib.request.urlretrieve(
+                    url, fpath
+                )
+            else:
+                raise e
 
 def create_bookkeeping(dataset, ways, meta_label):
     """
     Iterates over the entire dataset and creates a map of target to indices.
     Returns: A dict with key as the label and value as list of indices.
     """
-
     assert hasattr(dataset, '__getitem__'), \
             'Requires iterable-style dataset.'
 
@@ -50,6 +110,7 @@ def create_bookkeeping(dataset, ways, meta_label):
     #------- RotNet Unsupervised-------#
     if meta_label == 'rotnet':
         data = []
+        target = []
         angles = list(range(0,360,int(360/ways)))
         for i in range(len(dataset)):
             angle = random.choice(angles)
@@ -61,7 +122,12 @@ def create_bookkeeping(dataset, ways, meta_label):
 
             labels_to_indices[label].append(i)
             indices_to_labels[i] = label
+
+            target.ppaned(label)
+
         dataset.data = data
+        dataset.targets = target
+        
     elif meta_label == 'supervised':
         #------- Original (Supervised) ---#
         for i in range(len(dataset)):
@@ -79,11 +145,16 @@ def create_bookkeeping(dataset, ways, meta_label):
     else:
         #-------Random Unsupervised-------#
         labels = list(range(ways))
+        targets = []
         for i in range(len(dataset)):
             l = random.choice(labels)
 
             labels_to_indices[l].append(i)
             indices_to_labels[i] = l
+
+            targets.append(l)
+
+        dataset.targets = targets
 
     dataset.labels_to_indices = labels_to_indices
     dataset.indices_to_labels = indices_to_labels
@@ -209,7 +280,7 @@ class CIFAR10_(datasets.CIFAR10):
         except:
             pass
 
-        return img, target, tt, td
+        return img, target#, tt, td
 
 
 
@@ -374,7 +445,7 @@ class SVHN_(torch.utils.data.Dataset):
         except:
             pass
 
-        return img, target, tt, td
+        return img, target#, tt, td
 
 
     def __len__(self):
@@ -468,7 +539,7 @@ class MNIST_RGB(datasets.MNIST):
         except:
             pass
 
-        return img, target, tt, td
+        return img, target#, tt, td
 
 
 
@@ -616,7 +687,7 @@ class notMNIST_(torch.utils.data.Dataset):
         img = Image.fromarray(img)#.convert('RGB')
         img = self.transform(img)
 
-        return img, target, tt, td
+        return img, target#, tt, td
 
     def __len__(self):
         return len(self.data)

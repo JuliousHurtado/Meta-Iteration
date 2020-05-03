@@ -5,6 +5,7 @@
 
 from __future__ import print_function
 import sys
+import copy
 
 if sys.version_info[0] == 2:
     import cPickle as pickle
@@ -15,6 +16,8 @@ import torch.utils.data as data
 import torch.utils.data
 from dataset.datasets_utils import *
 from torchvision import transforms
+
+import learn2learn as l2l
 
 mean_datasets = {
     'CIFAR10': [x/255 for x in [125.3,123.0,113.9]],
@@ -69,7 +72,7 @@ class DatasetGen(object):
         self.pc_valid = 0.15
         self.root = './data'
 
-        self.num_tasks = 5
+        self.num_task = 5
         self.num_samples = 0
 
         self.inputsize = [3,32,32]
@@ -77,14 +80,14 @@ class DatasetGen(object):
         self.num_workers = 4
         self.pin_memory = True
 
-        self.datasets_idx = list(np.random.permutation(self.num_tasks))
+        self.datasets_idx = list(np.random.permutation(self.num_task))
         print('Task order =', [list(classes_datasets.keys())[item] for item in self.datasets_idx])
         self.datasets_names = [list(classes_datasets.keys())[item] for item in self.datasets_idx]
 
 
         self.taskcla = []
 
-        for i in range(self.num_tasks):
+        for i in range(self.num_task):
             t = self.datasets_idx[i]
             self.taskcla.append(list(classes_datasets.values())[t])
         print('taskcla =', self.taskcla)
@@ -96,7 +99,7 @@ class DatasetGen(object):
         self.args = args
 
         self.dataloaders = {}
-        for i in range(self.num_tasks):
+        for i in range(self.num_task):
             self.dataloaders[i] = {}
 
         self.download = True
@@ -104,15 +107,6 @@ class DatasetGen(object):
         self.train_set = {}
         self.test_set = {}
         self.train_split = {}
-
-        self.task_memory = {}
-        for i in range(self.num_tasks):
-            self.task_memory[i] = {}
-            self.task_memory[i]['x'] = []
-            self.task_memory[i]['y'] = []
-            self.task_memory[i]['tt'] = []
-            self.task_memory[i]['td'] = []
-
 
     def get_dataset(self, dataset_idx, task_num, num_samples_per_class=False, normalize=True):
         dataset_name = list(mean_datasets.keys())[dataset_idx]
@@ -171,20 +165,19 @@ class DatasetGen(object):
         split = int(np.floor(self.pc_valid * len(self.train_set[task_id])))
         train_split, valid_split = torch.utils.data.random_split(self.train_set[task_id], [len(self.train_set[task_id]) - split, split])
 
-        self.train_split[task_id] = train_split
-        train_loader = torch.utils.data.DataLoader(train_split, batch_size=self.batch_size, num_workers=self.num_workers,
-                                                   pin_memory=self.pin_memory,shuffle=True)
-        valid_loader = torch.utils.data.DataLoader(valid_split, batch_size=int(self.batch_size * self.pc_valid),
-                                                   num_workers=self.num_workers, pin_memory=self.pin_memory,shuffle=True)
-        test_loader = torch.utils.data.DataLoader(self.test_set[task_id], batch_size=self.batch_size, num_workers=self.num_workers,
-                                                  pin_memory=self.pin_memory,shuffle=True)
-
         if self.args.meta_learn:
-            meta_dataset = copy.deepcopy(train_split)
+            meta_dataset = copy.deepcopy(self.train_set[task_id])
             meta_loader = self.get_meta_loader(meta_dataset)
             self.dataloaders[task_id]['meta'] = meta_loader
         else:
             self.dataloaders[task_id]['meta'] = None
+
+        train_loader = torch.utils.data.DataLoader(train_split, batch_size=self.batch_size, num_workers=self.num_workers,
+                                                   pin_memory=self.pin_memory,shuffle=True)
+        valid_loader = torch.utils.data.DataLoader(valid_split, batch_size=self.batch_size,
+                                                   num_workers=self.num_workers, pin_memory=self.pin_memory,shuffle=True)
+        test_loader = torch.utils.data.DataLoader(self.test_set[task_id], batch_size=self.batch_size, num_workers=self.num_workers,
+                                                  pin_memory=self.pin_memory,shuffle=True)
 
         self.dataloaders[task_id]['train'] = train_loader
         self.dataloaders[task_id]['valid'] = valid_loader
@@ -200,35 +193,7 @@ class DatasetGen(object):
         print ("Train+Val  set size: {} images of {}x{}".format(len(valid_loader.dataset)+len(train_loader.dataset),self.inputsize[1],self.inputsize[1]))
         print ("Test set size:       {} images of {}x{}".format(len(test_loader.dataset),self.inputsize[1],self.inputsize[1]))
 
-        if self.use_memory == 'yes' and self.num_samples > 0 :
-            self.update_memory(task_id)
-
         return self.dataloaders
-
-
-
-    def update_memory(self, task_id):
-
-        num_samples_per_class = self.num_samples // len(self.task_ids[task_id])
-        mem_class_mapping = {i: i for i, c in enumerate(self.task_ids[task_id])}
-
-        # Looping over each class in the current task
-        for i in range(len(self.task_ids[task_id])):
-            # Getting all samples for this class
-            data_loader = torch.utils.data.DataLoader(self.train_split[task_id], batch_size=1,
-                                                      num_workers=self.num_workers,
-                                                      pin_memory=self.pin_memory)
-            # Randomly choosing num_samples_per_class for this class
-            randind = torch.randperm(len(data_loader.dataset))[:num_samples_per_class]
-
-            # Adding the selected samples to memory
-            for ind in randind:
-                self.task_memory[task_id]['x'].append(data_loader.dataset[ind][0])
-                self.task_memory[task_id]['y'].append(mem_class_mapping[i])
-                self.task_memory[task_id]['tt'].append(data_loader.dataset[ind][2])
-                self.task_memory[task_id]['td'].append(data_loader.dataset[ind][3])
-
-        print('Memory updated by adding {} images'.format(len(self.task_memory[task_id]['x'])))
 
     def get_meta_loader(self, meta_dataset):
         create_bookkeeping(meta_dataset, self.args.ways, self.args.meta_label)
