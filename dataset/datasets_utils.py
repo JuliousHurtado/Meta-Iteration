@@ -23,7 +23,7 @@ import random
 
 import torch
 from torchvision import datasets, transforms
-from torch.nn import functional as F
+import torchvision.transforms.functional as F
 
 # from scipy.imageio import imread
 import pandas as pd
@@ -45,6 +45,21 @@ import tarfile
 import zipfile
 import codecs
 
+
+def _is_tar(filename):
+    return filename.endswith(".tar")
+
+
+def _is_targz(filename):
+    return filename.endswith(".tar.gz")
+
+
+def _is_gzip(filename):
+    return filename.endswith(".gz") and not filename.endswith(".tar.gz")
+
+
+def _is_zip(filename):
+    return filename.endswith(".zip")
 
 def check_integrity(fpath, md5=None):
     if not os.path.isfile(fpath):
