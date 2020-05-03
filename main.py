@@ -8,7 +8,10 @@ from torch import optim
 
 from model.models import TaskNormalization
 from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaRegularizer, getTaskRegularizer
-from dataset.getDataloaders import getTinyImageNet, getRandomDataset, getDividedCifar10
+#from dataset.getDataloaders import getTinyImageNet, getRandomDataset, getDividedCifar10
+from dataset.cifar10 import DatasetGen as cifar10
+from dataset.multidataset import DatasetGen as multi_cls
+
 from train.meta_training import trainingProcessMeta
 from train.task_training import trainingProcessTask, addResults
 
@@ -41,42 +44,43 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
     masks = {}
 
     results = {}
-    for i in range(len(data_generators)):
+    for i in range(data_generators.num_task):
         results[i] = {
             'meta_loss': [],
             'meta_acc': [],
             'train_acc': [],
             'train_loss': [],
+            'valid_acc': [],
             'test_acc': [],
             'final_acc': [],
         }
 
-        task_dataloader = data_generators[i]
+        task_dataloader = data_generators.get(i)
         opti = adjustModelTask(model, i, lr)
 
         for e in range(args.epochs):
 
             if args.meta_learn and e % 5 == 0:
                 opti_meta = adjustModelTask(model, 'meta', lr, norm=False)            
-                loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader['meta'], meta_reg['reg'], device)
+                loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader[i]['meta'], meta_reg['reg'], device)
                 results[i]['meta_loss'].append(loss_meta)
                 results[i]['meta_acc'].append(acc_meta)
                 print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))
 
                 adjustModelTask(model, i, lr)  
             
-            loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, loss, opti, task_reg, device) 
+            loss_task, acc_task = trainingProcessTask(task_dataloader[i]['train'], model, loss, opti, task_reg, device) 
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
             print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i+1), flush=True)
             
-            addResults(model, data_generators, results, device, i, False)
+            addResults(model, task_dataloader, results, device, i, opti, False)
 
         if task_reg['use']['gs_mask']:
             task_reg['reg'].setMasks(model)
             masks[i] = copy.deepcopy(task_reg['reg'].masks)
 
-        addResults(model, data_generators, results, device, i, False, True, masks)
+        addResults(model, task_dataloader, results, device, i, False, True, masks)
 
         if args.save_model:
             name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg)
@@ -86,7 +90,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
         name_file = '{}/{}_{}_{}_{}_{}_{}_{}_{}'.format('results', 'final', args.dataset, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg, str(time.time()))
         saveValues(name_file, results, model.module, args)
 
-    for i in range(len(data_generators)):
+    for i in range(data_generators.num_task):
         print(results[i]['final_acc'])
 
 if __name__ == '__main__':
@@ -105,12 +109,12 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    if args.dataset == 'tiny-imagenet':
-        data_generators, cls_per_task = getTinyImageNet(args)
-    elif args.dataset == 'random':
-        data_generators, cls_per_task = getRandomDataset(args)
-    elif args.dataset == 'cifar10':
-        data_generators, cls_per_task = getDividedCifar10(args)
+    if args.dataset == 'cifar10':
+        data_generators = cifar10(args)
+    elif args.dataset == 'multi':
+        data_generators = multi_cls(args)
+    
+    cls_per_task = data_generators.taskcla
 
     model = getModel(args, cls_per_task, device)
     meta_model = getMetaAlgorithm(model, args.fast_lr, args.first_order)
