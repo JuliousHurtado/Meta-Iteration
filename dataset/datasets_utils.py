@@ -40,7 +40,7 @@ import functools
 
 from dataset.utils import *
 
-def create_bookkeeping(dataset, ways, meta_label):
+def create_bookkeeping(dataset, ways, meta_label, n_data='cifar10'):
     """
     Iterates over the entire dataset and creates a map of target to indices.
     Returns: A dict with key as the label and value as list of indices.
@@ -58,7 +58,13 @@ def create_bookkeeping(dataset, ways, meta_label):
         angles = list(range(0,360,int(360/ways)))
         for i in range(len(dataset)):
             angle = random.choice(angles)
-            img = Image.fromarray(dataset.data[i])
+            if n_data == 'svhn':
+                img = Image.fromarray(np.transpose(dataset.data[i], (1, 2, 0)))
+            elif n_data == 'fashionMNIST':
+                img = Image.fromarray(dataset.data[i], mode='L').convert('RGB')
+            else:
+                img = Image.fromarray(dataset.data[i])
+
             new_img = np.array(F.rotate(img, angle))
             label = angles.index(angle)
 
@@ -411,6 +417,13 @@ class SVHN_(torch.utils.data.Dataset):
 
 class MNIST_RGB(datasets.MNIST):
 
+    urls = [
+        "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz",
+        "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz",
+        "http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz",
+        "http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz"
+    ]
+
     def __init__(self, root, task_num, num_samples_per_class, train=True, transform=None, target_transform=None, download=False):
         super(MNIST_RGB, self).__init__(root, task_num, transform=transform,
                                         target_transform=target_transform,
@@ -471,8 +484,11 @@ class MNIST_RGB(datasets.MNIST):
         try:
             img = Image.fromarray(img, mode='L').convert('RGB')
         except:
-            pass
-
+            #try:
+            # img = np.transpose(img, (2, 0, 1))            
+            img = Image.fromarray(img)
+            #except:
+            #    pass
         try:
             if self.transform is not None: img = self.transform(img)
         except:

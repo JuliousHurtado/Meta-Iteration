@@ -110,7 +110,7 @@ class DatasetGen(object):
 
     def get_dataset(self, dataset_idx, task_num, num_samples_per_class=False, normalize=True):
         dataset_name = list(mean_datasets.keys())[dataset_idx]
-        nspc = num_samples_per_class
+        nspc = 100#num_samples_per_class
         if normalize:
             transformation = transforms.Compose([transforms.ToTensor(),
                                                  transforms.Normalize(mean_datasets[dataset_name],std_datasets[dataset_name])])
@@ -166,8 +166,13 @@ class DatasetGen(object):
         train_split, valid_split = torch.utils.data.random_split(self.train_set[task_id], [len(self.train_set[task_id]) - split, split])
 
         if self.args.meta_learn:
+            n_data = 'cifar10'
+            if current_dataset_idx == 3:
+                n_data = 'svhn'
+            elif current_dataset_idx == 4 or current_dataset_idx == 2:
+                n_data = 'fashionMNIST'
             meta_dataset = copy.deepcopy(self.train_set[task_id])
-            meta_loader = self.get_meta_loader(meta_dataset)
+            meta_loader = self.get_meta_loader(meta_dataset, n_data)
             self.dataloaders[task_id]['meta'] = meta_loader
         else:
             self.dataloaders[task_id]['meta'] = None
@@ -195,8 +200,8 @@ class DatasetGen(object):
 
         return self.dataloaders
 
-    def get_meta_loader(self, meta_dataset):
-        create_bookkeeping(meta_dataset, self.args.ways, self.args.meta_label)
+    def get_meta_loader(self, meta_dataset, n_data):
+        create_bookkeeping(meta_dataset, self.args.ways, self.args.meta_label, n_data)
 
         meta_transforms = [
                     l2l.data.transforms.NWays(meta_dataset, self.args.ways),
