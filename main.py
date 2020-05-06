@@ -60,7 +60,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
 
         for e in range(args.epochs):
 
-            if args.meta_learn and e % 5 == 0:
+            if args.meta_learn and e % 5 == 0 and e < args.final_meta:
                 opti_meta = adjustModelTask(model, 'meta', args.meta_lr, norm=True)            
                 loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader[i]['meta'], meta_reg['reg'], device)
                 results[i]['meta_loss'].append(loss_meta)
@@ -80,7 +80,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
             task_reg['reg'].setMasks(model)
             masks[i] = copy.deepcopy(task_reg['reg'].masks)
 
-        addResults(model, task_dataloader, results, device, i, False, True, masks)
+        addResults(model, task_dataloader, results, device, i, opti, False, True, masks)
 
         if args.save_model:
             name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg)
