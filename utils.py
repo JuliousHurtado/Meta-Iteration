@@ -74,6 +74,7 @@ def getArguments():
     parser.add_argument('--meta-batch-size', type=int, default=16)
     parser.add_argument('--adaptation-steps', type=int, default=5)
     parser.add_argument('--fast-lr', type=float, default=0.05)
+    parser.add_argument('--meta-lr', type=float, default=0.003)
     parser.add_argument('--first-order', type=str2bool, default=False)
     parser.add_argument('--meta-label', type=str, default='random', choices=['rotnet', 'random', 'supervised'])
 

@@ -61,7 +61,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
         for e in range(args.epochs):
 
             if args.meta_learn and e % 5 == 0:
-                opti_meta = adjustModelTask(model, 'meta', lr, norm=False)            
+                opti_meta = adjustModelTask(model, 'meta', args.meta_lr, norm=True)            
                 loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader[i]['meta'], meta_reg['reg'], device)
                 results[i]['meta_loss'].append(loss_meta)
                 results[i]['meta_acc'].append(acc_meta)
