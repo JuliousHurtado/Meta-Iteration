@@ -110,7 +110,7 @@ class DatasetGen(object):
 
     def get_dataset(self, dataset_idx, task_num, num_samples_per_class=False, normalize=True):
         dataset_name = list(mean_datasets.keys())[dataset_idx]
-        nspc = 100#num_samples_per_class
+        nspc = num_samples_per_class
         if normalize:
             transformation = transforms.Compose([transforms.ToTensor(),
                                                  transforms.Normalize(mean_datasets[dataset_name],std_datasets[dataset_name])])
