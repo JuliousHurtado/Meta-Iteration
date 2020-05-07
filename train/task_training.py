@@ -2,9 +2,12 @@ import copy
 import numpy as np
 
 import torch
+from torch import nn
 from torch.nn import functional as F
+from model.models import TaskNormalization
 
-def trainingProcessTask(data_loader, learner, loss, optimizer, regs, device):
+def trainingProcessTask(data_loader, learner, optimizer, regs, device):
+    loss = nn.CrossEntropyLoss(reduction='mean')
     learner.train()
     running_loss = 0.0
     running_corrects = 0.0
@@ -59,7 +62,20 @@ def adjust_learning_rate(optimizer):
     for param_group in optimizer.param_groups:
         param_group['lr'] = param_group['lr']/2
 
-def addResults(model, data_generators, results, device, task, opti, all_tasks=False, final_acc=False, masks=None):
+def parametersTask(network, all_layers, task=False):
+    for layer in network.children():
+        if isinstance(layer, TaskNormalization):
+            parametersTask(layer, all_layers, True)
+        if list(layer.children()) == [] and task: # if leaf node, add it to list
+            for p in layer.parameters():
+                all_layers.append(p)
+        if list(layer.children()) != []:
+            parametersTask(layer, all_layers)
+        if isinstance(layer, torch.nn.Linear):
+            for p in layer.parameters():
+                all_layers.append(p)
+
+def addResults(model, data_generators, results, device, task, opti, all_tasks=False, final_acc=False, masks=None, re_train=False):
     if all_tasks:
         for j in range(task+1):
             val_accuracy = test_normal(model, data_generators[j]['valid'], device)
@@ -76,6 +92,13 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
         for j in range(task+1):
             model.setLinearLayer(j)
             model.setTaskNormalizationLayer(j)
+
+            if re_train:
+                m = copy.deepcopy(model.model)
+                params = parametersTask(m, [])
+                opti = optim.SGD(params, 0.003, momentum=0.0, weight_decay=0.0)
+                for _ in range(10):
+                    trainingProcessTask(data_generators[j]['sample'], m, opti, [], device)
 
             if masks:
                 test_accuracy = test_normal_masks(model, data_generators[j]['test'], device, masks[j])
