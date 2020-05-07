@@ -39,8 +39,6 @@ def adjustModelTask(model, task, lr, linear=True, norm=True):
 
 def main(args, data_generators, model, device, meta_reg, task_reg):
     lr = args.lr
-    loss = nn.CrossEntropyLoss(reduction='mean')
-
     masks = {}
 
     results = {}
@@ -62,14 +60,14 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
 
             if args.meta_learn and e % 5 == 0 and e < args.final_meta:
                 opti_meta = adjustModelTask(model, 'meta', args.meta_lr, norm=True)            
-                loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, loss, task_dataloader[i]['meta'], meta_reg['reg'], device)
+                loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, task_dataloader[i]['meta'], meta_reg['reg'], device)
                 results[i]['meta_loss'].append(loss_meta)
                 results[i]['meta_acc'].append(acc_meta)
                 print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))
 
                 adjustModelTask(model, i, lr)  
             
-            loss_task, acc_task = trainingProcessTask(task_dataloader[i]['train'], model, loss, opti, task_reg, device) 
+            loss_task, acc_task = trainingProcessTask(task_dataloader[i]['train'], model, opti, task_reg, device) 
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
             print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i+1), flush=True)

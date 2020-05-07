@@ -108,7 +108,8 @@ def getArguments():
     parser.add_argument('--epochs', type=int, default=60)
     parser.add_argument('--batch-size', type=int, default=64)
     parser.add_argument('--lr', type=float, default=0.003)
-    parser.add_argument('--num-data', type=int, default=-1)
+    parser.add_argument('--re-train', type=str2bool, default=False)
+    parser.add_argument('--nspc', type=int, default=10)
     parser.add_argument('--save-model', type=str2bool, default=True)
     parser.add_argument('--meta-learn', type=str2bool, default=True)
 

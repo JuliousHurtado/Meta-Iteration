@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 
 def accuracy(predictions, targets):
     predictions = predictions.argmax(dim=1).view(targets.shape)
@@ -32,7 +33,8 @@ def fast_adapt(batch, learner, regs, loss, adaptation_steps, shots, ways, device
     valid_accuracy = accuracy(predictions, evaluation_labels)
     return valid_error, valid_accuracy
 
-def trainingProcessMeta(args, model, opt, loss, data_generators, regs, device):
+def trainingProcessMeta(args, model, opt, data_generators, regs, device):
+    loss = nn.CrossEntropyLoss(reduction='mean')
     for iteration in range(args.num_iterations):
         meta_train_error = 0.0
         meta_train_accuracy = 0.0

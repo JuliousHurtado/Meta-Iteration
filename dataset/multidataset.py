@@ -108,6 +108,9 @@ class DatasetGen(object):
         self.test_set = {}
         self.train_split = {}
 
+        self.num_samples_per_class = args.nspc
+        self.get_sample = args.re_train
+
     def get_dataset(self, dataset_idx, task_num, num_samples_per_class=False, normalize=True):
         dataset_name = list(mean_datasets.keys())[dataset_idx]
         nspc = num_samples_per_class
@@ -160,6 +163,9 @@ class DatasetGen(object):
         dataset_name = list(mean_datasets.keys())[current_dataset_idx]
         self.train_set[task_id], self.test_set[task_id] = self.get_dataset(current_dataset_idx,task_id)
 
+        if self.get_sample:
+            sample_dataset, _ = self.get_dataset(current_dataset_idx, task_id, self.num_samples_per_class)
+
         self.num_classes = classes_datasets[dataset_name]
 
         split = int(np.floor(self.pc_valid * len(self.train_set[task_id])))
@@ -191,6 +197,11 @@ class DatasetGen(object):
                                                                               classes_datasets[dataset_name],
                                                                               len(self.train_set[task_id]))
         self.dataloaders[task_id]['classes'] = self.num_classes
+
+        if self.get_sample:
+            sample_loader = torch.utils.data.DataLoader(sample_dataset, batch_size=self.batch_size, num_workers=self.num_workers,
+                                                   pin_memory=self.pin_memory,shuffle=True)
+            self.dataloaders[task_id]['sample'] = sample_loader
 
 
         print ("Training set size:   {} images of {}x{}".format(len(train_loader.dataset),self.inputsize[1],self.inputsize[1]))
