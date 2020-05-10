@@ -100,9 +100,12 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
                 for _ in range(5):
                     trainingProcessTask(data_generators[j]['sample'], m, opti, [], device)
 
-            if masks:
-                test_accuracy = test_normal_masks(model, data_generators[j]['test'], device, masks[j])
+                test_accuracy = test_normal_masks(m, data_generators[j]['test'], device, masks[j])
+            
             else:
-                test_accuracy = test_normal(model, data_generators[j]['test'], device)
+                if masks:
+                    test_accuracy = test_normal_masks(model, data_generators[j]['test'], device, masks[j])
+                else:
+                    test_accuracy = test_normal(model, data_generators[j]['test'], device)
             
             results[j]['final_acc'].append(test_accuracy)
