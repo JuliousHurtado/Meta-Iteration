@@ -58,7 +58,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
 
         for e in range(args.epochs):
 
-            if args.meta_learn and e % 5 == 0 and e < args.final_meta:
+            if args.meta_learn and e % 5 == 0 and e < args.final_meta and i > 0:
                 if args.meta_label == 'ewc':
                     loss_meta, acc_meta = 0, 0
                     if i > 0:
