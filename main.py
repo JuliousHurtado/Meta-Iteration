@@ -7,7 +7,7 @@ from torch import nn
 from torch import optim
 
 from model.models import TaskNormalization
-from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaRegularizer, getTaskRegularizer
+from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaRegularizer, getTaskRegularizer, getEWC
 #from dataset.getDataloaders import getTinyImageNet, getRandomDataset, getDividedCifar10
 from dataset.cifar10 import DatasetGen as cifar10
 from dataset.multidataset import DatasetGen as multi_cls
@@ -59,8 +59,16 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
         for e in range(args.epochs):
 
             if args.meta_learn and e % 5 == 0 and e < args.final_meta:
-                opti_meta = adjustModelTask(model, 'meta', args.meta_lr, norm=True)            
-                loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, task_dataloader[i]['meta'], meta_reg['reg'], device)
+                if args.meta_label == 'ewc':
+                    loss_meta, acc_meta = 0, 0
+                    if i > 0:
+                        reg = getEWC(i, data_generators.train_set, model, args.ewc_importance, args.sample_size)
+                        loss_meta, acc_meta = trainingProcessTask(task_dataloader[i]['train'], model, opti, reg, device) 
+                    
+                else:
+                    opti_meta = adjustModelTask(model, 'meta', args.meta_lr, norm=True)            
+                    loss_meta, acc_meta = trainingProcessMeta(args, model, opti_meta, task_dataloader[i]['meta'], meta_reg['reg'], device)
+                
                 results[i]['meta_loss'].append(loss_meta)
                 results[i]['meta_acc'].append(acc_meta)
                 print('Meta: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_meta, acc_meta*100, i+1))

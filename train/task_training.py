@@ -96,8 +96,8 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
             if re_train:
                 m = copy.deepcopy(model.model)
                 params = parametersTask(m, [])
-                opti = optim.SGD(params, 0.003, momentum=0.0, weight_decay=0.0)
-                for _ in range(10):
+                opti = optim.SGD(params, 0.0001, momentum=0.0, weight_decay=0.0)
+                for _ in range(5):
                     trainingProcessTask(data_generators[j]['sample'], m, opti, [], device)
 
             if masks:

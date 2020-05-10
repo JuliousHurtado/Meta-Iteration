@@ -1,5 +1,6 @@
 import torch
 import os
+import random
 import argparse
 from collections import defaultdict
 
@@ -8,7 +9,7 @@ import learn2learn as l2l
 from model.models import MiniImagenetCNN, TaskManager
 from method.maml import MAML
 from method.regularizer import FilterReg, LinearReg, FilterSparseReg, GroupMask
-# from method.ewc import EWC
+from method.ewc import EWC
 # from method.MAS import MAS
 
 
@@ -55,6 +56,18 @@ def getTaskRegularizer(task_reg, ewc_importance, c_theta, c_lambda, c_sparse):
 
     return { 'reg': reg, 'use': reg_used}
 
+def getEWC(task, data_loader, model, importance, sample_size):
+    old_tasks = []
+                    
+    for sub_task in range(task):
+        old_tasks = old_tasks + data_loader[sub_task].get_sample(sample_size)
+                    
+    old_tasks = random.sample(old_tasks, k=sample_size)
+    ewc = EWC(model, old_tasks, importance)
+    reg = { 'reg': ewc, 'use': {'ewc': True, 'gs_mask': False, 'mas': False, 'si': False}}
+
+    return reg
+
 #--------------------------Args-----------------------------------#
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1', 'True'):
@@ -77,7 +90,7 @@ def getArguments():
     parser.add_argument('--fast-lr', type=float, default=0.05)
     parser.add_argument('--meta-lr', type=float, default=0.003)
     parser.add_argument('--first-order', type=str2bool, default=False)
-    parser.add_argument('--meta-label', type=str, default='random', choices=['rotnet', 'random', 'supervised'])
+    parser.add_argument('--meta-label', type=str, default='random', choices=['rotnet', 'random', 'supervised', 'ewc'])
 
     #---------------------Datasets---------------------------------#
     parser.add_argument('--dataset', type=str, default='tiny-imagenet', choices=['tiny-imagenet', 'multi', 'cifar10'])
@@ -99,6 +112,7 @@ def getArguments():
 
     parser.add_argument('--task-reg', type=str, default='', choices=['','ewc', 'mas', 'si', 'gs_mask'])
     parser.add_argument('--ewc-importance', type=float, default=100)
+    parser.add_argument('--sample-size', type=int, default=200)
     parser.add_argument('--reg-theta', type=float, default=0.05)
     parser.add_argument('--reg-lambda', type=float, default=0.1)
     parser.add_argument('--reg-sparse', type=float, default=0.001)

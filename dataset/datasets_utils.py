@@ -257,6 +257,23 @@ class CIFAR10_(datasets.CIFAR10):
             self.classes = data[self.meta['key']]
         self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
 
+    def get_sample(self, sample_size):
+        sample_idx = random.sample(range(len(self)), sample_size)
+        temp = []
+        for img in self.data[sample_idx]:
+            try:
+                img = Image.fromarray(img)
+            except:
+                pass
+
+            try:
+                if self.transform is not None: img = self.transform(img)
+            except:
+                pass
+
+            temp.append(img)
+        return temp
+
 
 class CIFAR100_(CIFAR10_):
     """`CIFAR100 <https://www.cs.toronto.edu/~kriz/cifar.html>`_ Dataset.
@@ -414,6 +431,22 @@ class SVHN_(torch.utils.data.Dataset):
     def extra_repr(self):
         return "Split: {split}".format(**self.__dict__)
 
+    def get_sample(self, sample_size):
+        sample_idx = random.sample(range(len(self)), sample_size)
+        temp = []
+        for img in self.data[sample_idx]:
+            try:
+                img = Image.fromarray(np.transpose(img, (1, 2, 0)))
+            except:
+                pass
+
+            try:
+                if self.transform is not None: img = self.transform(img)
+            except:
+                pass
+            temp.append(img)
+        return temp
+
 
 class MNIST_RGB(datasets.MNIST):
 
@@ -559,6 +592,23 @@ class MNIST_RGB(datasets.MNIST):
     def extra_repr(self):
         return "Split: {}".format("Train" if self.train is True else "Test")
 
+    def get_sample(self, sample_size):
+        sample_idx = random.sample(range(len(self)), sample_size)
+        temp = []
+        for img in self.data[sample_idx]:
+            try:
+                img = Image.fromarray(img, mode='L').convert('RGB')
+            except:          
+                img = Image.fromarray(img)
+
+            try:
+                if self.transform is not None: img = self.transform(img)
+            except:
+                pass
+
+            temp.append(img)
+        return temp
+
 
 class FashionMNIST_(MNIST_RGB):
     """`Fashion MNIST <https://github.com/zalandoresearch/fashion-mnist>`_ Dataset.
@@ -673,3 +723,13 @@ class notMNIST_(torch.utils.data.Dataset):
         zip_ref = zipfile.ZipFile(fpath, 'r')
         zip_ref.extractall(root)
         zip_ref.close()
+
+    def get_sample(self, sample_size):
+        sample_idx = random.sample(range(len(self)), sample_size)
+        temp = []
+        for img in self.data[sample_idx]:
+            img = Image.fromarray(img)#.convert('RGB')
+            img = self.transform(img)
+
+            temp.append(img)
+        return temp
