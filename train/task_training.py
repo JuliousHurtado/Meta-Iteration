@@ -2,6 +2,7 @@ import copy
 import numpy as np
 
 import torch
+from torch import optim
 from torch import nn
 from torch.nn import functional as F
 from model.models import TaskNormalization
@@ -48,7 +49,10 @@ def test_normal(model, data_loader, device):
     return correct.item() / len(data_loader.dataset)
 
 def test_normal_masks(model, data_loader, device, masks):
-    temp_model = copy.deepcopy(model.model)
+    try:
+        temp_model = copy.deepcopy(model.model)
+    except:
+        temp_model = copy.deepcopy(model)
 
     temp_model.eval()
     correct = 0
@@ -95,10 +99,12 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
 
             if re_train:
                 m = copy.deepcopy(model.model)
-                params = parametersTask(m, [])
+
+                params = []
+                parametersTask(m, params)
                 opti = optim.SGD(params, 0.0001, momentum=0.0, weight_decay=0.0)
                 for _ in range(5):
-                    trainingProcessTask(data_generators[j]['sample'], m, opti, [], device)
+                    trainingProcessTask(data_generators[j]['sample'], m, opti, {'reg': False, 'use': {'gs_mask': False}}, device)
 
                 test_accuracy = test_normal_masks(m, data_generators[j]['test'], device, masks[j])
             

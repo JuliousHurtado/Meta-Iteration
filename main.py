@@ -80,13 +80,13 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
             results[i]['train_acc'].append(acc_task)            
             print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i+1), flush=True)
             
-            addResults(model, task_dataloader, results, device, i, opti, False)
+            addResults(model, task_dataloader, results, device, i, opti, False, False)
 
         if task_reg['use']['gs_mask']:
             task_reg['reg'].setMasks(model)
             masks[i] = copy.deepcopy(task_reg['reg'].masks)
 
-        addResults(model, task_dataloader, results, device, i, opti, False, True, masks)
+        addResults(model, task_dataloader, results, device, i, opti, False, True, masks, args.re_train)
 
         if args.save_model:
             name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg)
