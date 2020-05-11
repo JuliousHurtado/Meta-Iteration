@@ -119,7 +119,8 @@ if __name__ == '__main__':
         data_generators = cifar10(args)
     elif args.dataset == 'multi':
         data_generators = multi_cls(args)
-    
+        args.dataset_order = data_generators.datasets_names
+
     cls_per_task = data_generators.taskcla
 
     model = getModel(args, cls_per_task, device)
