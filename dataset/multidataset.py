@@ -81,7 +81,7 @@ class DatasetGen(object):
         self.pin_memory = True
 
         if args.set_order:
-            self.datasets_idx = [3, 0, 2, 1, 4]
+            self.datasets_idx = [1, 4, 2, 0, 3] #3, 0, 2, 1, 4]
         else:
             self.datasets_idx = list(np.random.permutation(self.num_task))
         print('Task order =', [list(classes_datasets.keys())[item] for item in self.datasets_idx])
