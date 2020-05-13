@@ -88,9 +88,9 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
         val_accuracy = test_normal(model, data_generators[task]['valid'], device)
         results[task]['valid_acc'].append(val_accuracy)
 
-        if len(results[task]['valid_acc']) > 5:
-            if np.mean(results[task]['valid_acc'][-6:-1]) > results[task]['valid_acc'][-1]:
-                adjust_learning_rate(opti)
+        #if len(results[task]['valid_acc']) > 5:
+        #    if np.mean(results[task]['valid_acc'][-6:-1]) > results[task]['valid_acc'][-1]:
+        #        adjust_learning_rate(opti)
 
     if final_acc:
         for j in range(task+1):

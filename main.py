@@ -58,12 +58,13 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
 
         for e in range(args.epochs):
 
-            if args.meta_learn and e % 5 == 0 and e < args.final_meta:
+            if args.meta_learn and e % 5 == 0 and e < args.final_meta and e > 0:
                 if args.meta_label == 'ewc':
                     loss_meta, acc_meta = 0, 0
                     if i > 0:
+                        opti_meta = adjustModelTask(model, 'meta', args.meta_lr, norm=True) 
                         reg = getEWC(i, data_generators.train_set, model, args.ewc_importance, args.sample_size)
-                        loss_meta, acc_meta = trainingProcessTask(task_dataloader[i]['train'], model, opti, reg, device) 
+                        loss_meta, acc_meta = trainingProcessTask(task_dataloader[i]['train'], model, opti_meta, reg, device) 
                     
                 else:
                     opti_meta = adjustModelTask(model, 'meta', args.meta_lr, norm=True)            
@@ -87,6 +88,9 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
             masks[i] = copy.deepcopy(task_reg['reg'].masks)
 
         addResults(model, task_dataloader, results, device, i, opti, False, True, masks, args.re_train)
+        
+        for j in range(i+1):
+            print(results[j]['final_acc'])
 
         if args.save_model:
             name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg)
