@@ -25,7 +25,7 @@ def trainingProcessTask(data_loader, learner, optimizer, regs, device):
 
         if regs['reg']:
             l += regs['reg'](learner)
-
+        
         l.backward()
 
         if regs['reg'] and regs['use']['gs_mask']:
@@ -116,5 +116,6 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
                     test_accuracy = test_normal_masks(model, data_generators[j]['test'], device, masks[j])
                 else:
                     test_accuracy = test_normal(model, data_generators[j]['test'], device)
-            
+                    print(test_accuracy)
+
             results[j]['final_acc'].append(test_accuracy)

@@ -46,7 +46,7 @@ class EWC(object):
             self._means[n] = p.to(device)
 
     def __call__(self, model: nn.Module):
-        loss = 0
+        loss = 0.0
         for n, p in model.named_parameters():
             _loss = self._precision_matrices[n] * (p - self._means[n]) ** 2
             loss += _loss.sum()

@@ -115,7 +115,6 @@ def getArguments():
     parser.add_argument('--sample-size', type=int, default=200)
     parser.add_argument('--reg-theta', type=float, default=0.05)
     parser.add_argument('--reg-lambda', type=float, default=0.1)
-    parser.add_argument('--reg-sparse', type=float, default=0.001)
 
     #---------------------Extras-----------------------------------#
     parser.add_argument('--seed', type=int, default=42)
