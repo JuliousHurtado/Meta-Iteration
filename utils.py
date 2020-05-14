@@ -10,7 +10,8 @@ from model.models import MiniImagenetCNN, TaskManager
 from method.maml import MAML
 from method.regularizer import FilterReg, LinearReg, FilterSparseReg, GroupMask
 from method.ewc import EWC
-# from method.MAS import MAS
+from method.MAS import MAS
+from method.si import SI
 
 
 #--------------------------Load Model------------------------------#
@@ -37,35 +38,34 @@ def getMetaRegularizer(convFilter, c_theta, linearReg, c_omega, sparseFilter):
 
     return {'reg': regs, 'use': use_meta_reg}
 
-def getTaskRegularizer(task_reg, ewc_importance, c_theta, c_lambda, c_sparse):
+def getTaskRegularizer(model, task_reg, ewc_importance, c_theta, c_lambda):
     reg_used = {'ewc': False, 'gs_mask': False, 'mas': False, 'si': False}
     reg_used[task_reg] = True
 
     reg = None
     if task_reg == 'ewc':
-        pass
+        reg = EWC(model, ewc_importance)
 
     if task_reg == 'gs_mask':
         reg = GroupMask(c_theta)
 
     if task_reg == 'mas':
-        pass
+        reg = MAS(model, c_lambda)
 
     if task_reg == 'si':
-        pass
+        reg = SI(model, c_lambda)
 
     return { 'reg': reg, 'use': reg_used}
 
-def getEWC(task, data_loader, model, importance, sample_size):
+def getReg(task, data_loader, model, reg, sample_size):
     old_tasks = []
                     
     for sub_task in range(task):
         old_tasks = old_tasks + data_loader[sub_task].get_sample(sample_size)
-                    
+    
     old_tasks = random.sample(old_tasks, k=sample_size)
-    ewc = EWC(model, old_tasks, importance)
-    reg = { 'reg': ewc, 'use': {'ewc': True, 'gs_mask': False, 'mas': False, 'si': False}}
 
+    reg['reg'].init_new_task(model, old_tasks)
     return reg
 
 #--------------------------Args-----------------------------------#

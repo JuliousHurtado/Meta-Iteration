@@ -7,18 +7,12 @@ from torch.nn import functional as F
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class EWC(object):
-    def __init__(self, model: nn.Module, dataset: list, importance: float):
+    def __init__(self, model: nn.Module, importance: float):
 
         self.model = model
-        self.dataset = dataset
         self.importance = importance
 
-        self.params = {n: p for n, p in self.model.named_parameters() if p.requires_grad}
-        self._means = {}
-        self._precision_matrices = self._diag_fisher()
-
-        for n, p in deepcopy(self.params).items():
-            self._means[n] = p.to(device)
+        #self.init_new_task(model, dataset)
 
     def _diag_fisher(self):
         precision_matrices = {}
@@ -40,6 +34,16 @@ class EWC(object):
 
         precision_matrices = {n: p for n, p in precision_matrices.items()}
         return precision_matrices
+
+    def init_new_task(self, model, data_loader):
+        self.model = model
+        self.dataset = data_loader
+        self.params = {n: p for n, p in self.model.named_parameters() if p.requires_grad}
+        self._means = {}
+        self._precision_matrices = self._diag_fisher()
+
+        for n, p in deepcopy(self.params).items():
+            self._means[n] = p.to(device)
 
     def __call__(self, model: nn.Module):
         loss = 0

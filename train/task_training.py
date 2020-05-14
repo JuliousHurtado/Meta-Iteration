@@ -28,10 +28,13 @@ def trainingProcessTask(data_loader, learner, optimizer, regs, device):
 
         l.backward()
 
-        if regs['use']['gs_mask']:
+        if regs['reg'] and regs['use']['gs_mask']:
             regs['reg'].setGradZero(learner)
 
         optimizer.step()
+
+        if regs['reg'] and regs['use']['si']:
+            regs['reg'].update_w(learner)        
 
         running_loss += l.item()
         running_corrects += torch.sum(preds == labels.data)

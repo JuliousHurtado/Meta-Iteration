@@ -7,7 +7,7 @@ from torch import nn
 from torch import optim
 
 from model.models import TaskNormalization
-from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaRegularizer, getTaskRegularizer, getEWC
+from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaRegularizer, getTaskRegularizer, getReg
 #from dataset.getDataloaders import getTinyImageNet, getRandomDataset, getDividedCifar10
 from dataset.cifar10 import DatasetGen as cifar10
 from dataset.multidataset import DatasetGen as multi_cls
@@ -57,13 +57,15 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
         opti = adjustModelTask(model, i, lr)
 
         for e in range(args.epochs):
+            if i > 0 and (task_reg['use']['ewc'] or task_reg['use']['mas'] or task_reg['use']['si']):
+                reg = getReg(i, data_generators.train_set, model, task_reg, args.sample_size)
 
             if args.meta_learn and e % 5 == 0 and e < args.final_meta and e > 0:
                 if args.meta_label == 'ewc':
                     loss_meta, acc_meta = 0, 0
                     if i > 0:
                         opti_meta = adjustModelTask(model, 'meta', args.meta_lr, norm=True) 
-                        reg = getEWC(i, data_generators.train_set, model, args.ewc_importance, args.sample_size)
+                        reg = getReg(i, data_generators.train_set, model, task_reg, args.sample_size)
                         loss_meta, acc_meta = trainingProcessTask(task_dataloader[i]['train'], model, opti_meta, reg, device) 
                     
                 else:
@@ -76,7 +78,10 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
 
                 adjustModelTask(model, i, lr)  
             
-            loss_task, acc_task = trainingProcessTask(task_dataloader[i]['train'], model, opti, task_reg, device) 
+            t_reg = {'reg': False}
+            if i > 0 or task_reg['use']['gs_mask']:
+                t_reg = task_reg
+            loss_task, acc_task = trainingProcessTask(task_dataloader[i]['train'], model, opti, t_reg, device) 
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
             print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i+1), flush=True)
@@ -136,8 +141,8 @@ if __name__ == '__main__':
                     args.meta_reg_sparse)
 
     task_regs = getTaskRegularizer(
+                    model,
                     args.task_reg, args.ewc_importance,
-                    args.reg_theta, args.reg_lambda,
-                    args.reg_sparse)
+                    args.reg_theta, args.reg_lambda)
 
     main(args, data_generators, meta_model, device, meta_regs, task_regs)
