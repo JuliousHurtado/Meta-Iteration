@@ -97,9 +97,9 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
         for j in range(i+1):
             print(results[j]['final_acc'])
 
-        if args.save_model:
-            name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg)
-            saveValues(name_file, results, model.module, args)
+        # if args.save_model:
+        #     name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg)
+        #     saveValues(name_file, results, model.module, args)
 
     if args.save_model:
         name_file = '{}/{}_{}_{}_{}_{}_{}_{}_{}'.format('results', 'final', args.dataset, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg, str(time.time()))
