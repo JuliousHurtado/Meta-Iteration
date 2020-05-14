@@ -7,6 +7,8 @@ from torch import nn
 from torch.nn import functional as F
 from model.models import TaskNormalization
 
+from method.maml import MAML
+
 def trainingProcessTask(data_loader, learner, optimizer, regs, device):
     loss = nn.CrossEntropyLoss(reduction='mean')
     learner.train()
@@ -52,11 +54,8 @@ def test_normal(model, data_loader, device):
     return correct.item() / len(data_loader.dataset)
 
 def test_normal_masks(model, data_loader, device, masks):
-    try:
-        temp_model = copy.deepcopy(model.model)
-    except:
-        temp_model = copy.deepcopy(model)
-
+    temp_model = copy.deepcopy(model)
+    temp_model.setMasks(masks)
     temp_model.eval()
     correct = 0
     for input, target in data_loader:
@@ -91,10 +90,6 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
         val_accuracy = test_normal(model, data_generators[task]['valid'], device)
         results[task]['valid_acc'].append(val_accuracy)
 
-        #if len(results[task]['valid_acc']) > 5:
-        #    if np.mean(results[task]['valid_acc'][-6:-1]) > results[task]['valid_acc'][-1]:
-        #        adjust_learning_rate(opti)
-
     if final_acc:
         for j in range(task+1):
             model.setLinearLayer(j)
@@ -116,6 +111,5 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
                     test_accuracy = test_normal_masks(model, data_generators[j]['test'], device, masks[j])
                 else:
                     test_accuracy = test_normal(model, data_generators[j]['test'], device)
-                    print(test_accuracy)
 
             results[j]['final_acc'].append(test_accuracy)

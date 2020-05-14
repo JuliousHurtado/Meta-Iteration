@@ -112,6 +112,16 @@ class GroupMask(object):
 
         self.masks = masks
 
+    def getZerosMasks(self, model):
+        masks = []
+        for elem in model.model.base:
+            sizes = elem.conv.weight.size()
+            temp = elem.conv.weight.view(sizes[0],-1)
+            temp = temp.norm(2,1)
+            masks.append(torch.zeros_like(temp))
+
+        return masks
+
     def setGradZero(self, model):
         if self.masks is None:
             return None

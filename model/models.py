@@ -178,11 +178,10 @@ class TaskManager(nn.Module):
         return self.model(x)
 
     def setMasks(self, masks):
-        useful.append(((m - 1) == -1).type(torch.FloatTensor).to(device))
         for j, elem in enumerate(self.model.base):
             m = ((masks[j] - 1) == -1).type(torch.FloatTensor).to(masks[j].device)
-            elem.conv.weight.grad.mul_(m.view(-1,1,1,1))
-            elem.conv.bias.grad.mul_(m)
+            elem.conv.weight.mul(m.view(-1,1,1,1))
+            elem.conv.bias.mul(m)
 
-            elem.normalize.weight.grad.mul_(m)
-            elem.normalize.bias.grad.mul_(m)
+            elem.normalize.weight.mul(m)
+            elem.normalize.bias.mul(m)

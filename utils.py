@@ -126,6 +126,7 @@ def getArguments():
     parser.add_argument('--save-model', type=str2bool, default=True)
     parser.add_argument('--meta-learn', type=str2bool, default=True)
     parser.add_argument('--set-order', type=str2bool, default=False)
+    parser.add_argument('--test-every-epoch', type=str2bool, default=False)
 
 
     return parser

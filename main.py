@@ -86,7 +86,13 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
             results[i]['train_acc'].append(acc_task)            
             print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i+1), flush=True)
             
-            addResults(model, task_dataloader, results, device, i, opti, False, False)
+            if args.test_every_epoch and task_reg['use']['gs_mask']:
+                if e == 0:
+                    masks[i] = task_reg['reg'].getZerosMasks(model)
+                addResults(model, task_dataloader, results, device, i, opti, False, True, masks)
+
+            else:
+                addResults(model, task_dataloader, results, device, i, opti, False, args.test_every_epoch)
 
         if task_reg['use']['gs_mask']:
             task_reg['reg'].setMasks(model)
