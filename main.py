@@ -81,7 +81,10 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
             t_reg = {'reg': False}
             if i > 0 or task_reg['use']['gs_mask']:
                 t_reg = task_reg
-            loss_task, acc_task = trainingProcessTask(task_dataloader[i]['train'], model, opti, t_reg, device) 
+            if task_reg['use']['hat']:
+                loss_task, acc_task = trainingForHat(task_dataloader[i]['train'], model, opti, regs, device, i)
+            else:
+                loss_task, acc_task = trainingProcessTask(task_dataloader[i]['train'], model, opti, t_reg, device) 
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
             print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i+1), flush=True)
@@ -92,16 +95,16 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
                 addResults(model, task_dataloader, results, device, i, opti, False, True, masks)
 
             else:
-                addResults(model, task_dataloader, results, device, i, opti, False, args.test_every_epoch)
+                addResults(model, task_dataloader, results, device, i, opti, False, args.test_every_epoch, use_hat=task_reg['use']['hat'])
 
         if task_reg['use']['gs_mask']:
             task_reg['reg'].setMasks(model)
             masks[i] = copy.deepcopy(task_reg['reg'].masks)
 
-        addResults(model, task_dataloader, results, device, i, opti, False, True, masks, args.re_train)
+        addResults(model, task_dataloader, results, device, i, opti, False, True, masks, args.re_train, task_reg['use']['hat'])
         
-        for j in range(i+1):
-            print(results[j]['final_acc'])
+        # for j in range(i+1):
+        #     print(results[j]['final_acc'])
 
         # if args.save_model:
         #     name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg)
@@ -138,8 +141,8 @@ if __name__ == '__main__':
 
     cls_per_task = data_generators.taskcla
 
-    model = getModel(args, cls_per_task, device)
-    meta_model = getMetaAlgorithm(model, args.fast_lr, args.first_order)
+    model = getModel(args, cls_per_task, device, True)
+    meta_model = getMetaAlgorithm(model, args.fast_lr, args.first_order, True)
 
     meta_regs = getMetaRegularizer( 
                     args.meta_reg_filter, args.cost_theta,
@@ -149,6 +152,7 @@ if __name__ == '__main__':
     task_regs = getTaskRegularizer(
                     model,
                     args.task_reg, args.ewc_importance,
-                    args.reg_theta, args.reg_lambda)
+                    args.reg_theta, args.reg_lambda,
+                    args.cost_smax)
 
     main(args, data_generators, meta_model, device, meta_regs, task_regs)

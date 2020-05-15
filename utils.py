@@ -7,19 +7,25 @@ from collections import defaultdict
 import learn2learn as l2l
 
 from model.models import MiniImagenetCNN, TaskManager
+from model.hat_model import HATModel
 from method.maml import MAML
 from method.regularizer import FilterReg, LinearReg, FilterSparseReg, GroupMask
 from method.ewc import EWC
 from method.MAS import MAS
 from method.si import SI
+from method.hat import HAT
 
 
 #--------------------------Load Model------------------------------#
-def getModel(args, cls_per_task, device):
+def getModel(args, cls_per_task, device, use_hat=False):
+    if use_hat:
+        return HATModel(cls_per_task)
     return TaskManager(cls_per_task, args.ways, args.hidden_size, args.num_layers, args.task_normalization, device).to(device)
     #return MiniImagenetCNN(args.ways, args.hidden_size, args.num_layers, args.task_normalization).to(device)
 
-def getMetaAlgorithm(model, fast_lr, first_order):
+def getMetaAlgorithm(model, fast_lr, first_order, use_hat=False):
+    if use_hat:
+        return model
     return MAML(model, lr=fast_lr, first_order=first_order)
     
 def getMetaRegularizer(convFilter, c_theta, linearReg, c_omega, sparseFilter):
@@ -38,8 +44,8 @@ def getMetaRegularizer(convFilter, c_theta, linearReg, c_omega, sparseFilter):
 
     return {'reg': regs, 'use': use_meta_reg}
 
-def getTaskRegularizer(model, task_reg, ewc_importance, c_theta, c_lambda):
-    reg_used = {'ewc': False, 'gs_mask': False, 'mas': False, 'si': False}
+def getTaskRegularizer(model, task_reg, ewc_importance, c_theta, c_lambda, smax):
+    reg_used = {'ewc': False, 'gs_mask': False, 'mas': False, 'si': False, 'hat': False}
     reg_used[task_reg] = True
 
     reg = None
@@ -54,6 +60,9 @@ def getTaskRegularizer(model, task_reg, ewc_importance, c_theta, c_lambda):
 
     if task_reg == 'si':
         reg = SI(model, c_lambda)
+
+    if task_reg == 'hat':
+        reg = HAT(model, smax)
 
     return { 'reg': reg, 'use': reg_used}
 
@@ -110,11 +119,12 @@ def getArguments():
     parser.add_argument('--meta-reg-sparse', type=str2bool, default=False)
     parser.add_argument('--cost-theta', type=float, default=0.01)
 
-    parser.add_argument('--task-reg', type=str, default='', choices=['','ewc', 'mas', 'si', 'gs_mask'])
+    parser.add_argument('--task-reg', type=str, default='', choices=['','ewc', 'mas', 'si', 'gs_mask', 'hat'])
     parser.add_argument('--ewc-importance', type=float, default=100)
     parser.add_argument('--sample-size', type=int, default=200)
     parser.add_argument('--reg-theta', type=float, default=0.05)
     parser.add_argument('--reg-lambda', type=float, default=0.1)
+    parser.add_argument('--cost_smax', type=int, default=400)
 
     #---------------------Extras-----------------------------------#
     parser.add_argument('--seed', type=int, default=42)
