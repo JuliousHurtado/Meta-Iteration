@@ -111,7 +111,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
 
     if args.save_model:
         name_file = '{}/{}_{}_{}_{}_{}_{}_{}_{}'.format('results', 'final', args.dataset, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg, str(time.time()))
-        saveValues(name_file, results, model.module, args)
+        saveValues(name_file, results, model, args)
 
     for i in range(data_generators.num_task):
         print(results[i]['final_acc'])
