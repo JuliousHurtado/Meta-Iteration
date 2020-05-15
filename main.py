@@ -13,7 +13,7 @@ from dataset.cifar10 import DatasetGen as cifar10
 from dataset.multidataset import DatasetGen as multi_cls
 
 from train.meta_training import trainingProcessMeta
-from train.task_training import trainingProcessTask, addResults
+from train.task_training import trainingProcessTask, addResults, trainingForHat
 
 
 def checkParamsSum(model):
@@ -54,8 +54,8 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
         }
 
         task_dataloader = data_generators.get(i)
-        opti = adjustModelTask(model, i, lr)
-
+        opti = optim.SGD(model.parameters(), lr, momentum=0.0, weight_decay=0.0)
+        task_reg['reg'].init_new_task(model, i)
         for e in range(args.epochs):
             if i > 0 and (task_reg['use']['ewc'] or task_reg['use']['mas'] or task_reg['use']['si']):
                 reg = getReg(i, data_generators.train_set, model, task_reg, args.sample_size)
@@ -81,10 +81,9 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
             t_reg = {'reg': False}
             if i > 0 or task_reg['use']['gs_mask']:
                 t_reg = task_reg
-            if task_reg['use']['hat']:
-                loss_task, acc_task = trainingForHat(task_dataloader[i]['train'], model, opti, regs, device, i)
-            else:
-                loss_task, acc_task = trainingProcessTask(task_dataloader[i]['train'], model, opti, t_reg, device) 
+            
+            loss_task, acc_task = trainingForHat(task_dataloader[i]['train'], model, opti, task_reg, device, i)
+            
             results[i]['train_loss'].append(loss_task)
             results[i]['train_acc'].append(acc_task)            
             print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i+1), flush=True)

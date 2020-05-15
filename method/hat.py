@@ -1,5 +1,6 @@
 from copy import deepcopy
 import torch
+import numpy as np
 
 from torch import nn
 from torch.nn import functional as F
@@ -14,9 +15,10 @@ class HAT(object):
         self.mask_pre = None
         self.clipgrad=10000
         self.thres_cosh=50
+        self.thres_emb=6
 
-    def init_new_task(self, model, data_loader, task):
-        mask=self.model.mask(task,s=self.smax)
+    def init_new_task(self, model, t):
+        mask=self.model.mask(t,s=self.smax)
         for i in range(len(mask)):
             mask[i]=mask[i].data.clone()
         if t==0:
@@ -46,7 +48,7 @@ class HAT(object):
         reg/=count
         return self.ce(outputs,targets)+self.lamb*reg,reg
 
-    def __call__(self, model, e, len_data, t, criterion, inputs, targets):
+    def __call__(self, model, e, len_data, t, criterion, inputs, targets, optimizer):
         s=(self.smax-1/self.smax)*e/len_data+1/self.smax
         self.ce=criterion
         
@@ -78,4 +80,4 @@ class HAT(object):
             if n.startswith('e'):
                 p.data=torch.clamp(p.data,-self.thres_emb,self.thres_emb)
 
-        return loss
+        return loss, output

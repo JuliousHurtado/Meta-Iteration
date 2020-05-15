@@ -54,7 +54,7 @@ def trainingForHat(data_loader, learner, optimizer, regs, device, task):
         inputs = inputs.to(device)
         labels = labels.long().to(device)
 
-        l, out = regs['reg'](learner, i, len(data_loader.dataset), task, loss, inputs, labels)
+        l, out = regs['reg'](learner, i, len(data_loader.dataset), task, loss, inputs, labels, optimizer)
 
         _, preds = torch.max(out, 1)
 
@@ -89,7 +89,7 @@ def test_for_hat(model, data_loader, device, task):
     correct = 0
     for input, target in data_loader:
         input, target = input.to(device), target.long().to(device)
-        output = model(task, input, 400)
+        output, _ = model.forward(task, input, 400)
         correct += (F.softmax(output, dim=1).max(dim=1)[1] == target).data.sum()
     return correct.item() / len(data_loader.dataset)
 
@@ -147,4 +147,4 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
                     else:
                         test_accuracy = test_normal(model, data_generators[j]['test'], device)
 
-                results[j]['final_acc'].append(test_accuracy)
+            results[j]['final_acc'].append(test_accuracy)

@@ -9,26 +9,27 @@ def compute_conv_output_size(Lin,kernel_size,stride=1,padding=0,dilation=1):
 
 class HATModel(torch.nn.Module):
 
-    def __init__(self,taskcla):
+    def __init__(self,taskcla, device):
         super(HATModel,self).__init__()
 
         ncha,size,_= [3,32,32]
         self.taskcla=taskcla
+        self.device=device
 
-        self.c1=torch.nn.Conv2d(ncha, 32, kernel_size=3)
+        self.c1=torch.nn.Conv2d(ncha, 32, kernel_size=3, stride=(1,1), padding=1,bias=True)
         s=compute_conv_output_size(size,3)
         s=s//2
-        self.c2=torch.nn.Conv2d(32,32,kernel_size=3)
+        self.c2=torch.nn.Conv2d(32,32,kernel_size=3, stride=(1,1), padding=1,bias=True)
         s=compute_conv_output_size(s,3)
         s=s//2
-        self.c3=torch.nn.Conv2d(32,32,kernel_size=3)
+        self.c3=torch.nn.Conv2d(32,32,kernel_size=3, stride=(1,1), padding=1,bias=True)
         s=compute_conv_output_size(s,3)
         s=s//2
-        self.c4=torch.nn.Conv2d(32,32,kernel_size=3)
+        self.c4=torch.nn.Conv2d(32,32,kernel_size=3, stride=(1,1), padding=1,bias=True)
         s=compute_conv_output_size(s,3)
         s=s//2
         self.smid=s
-        self.maxpool=torch.nn.MaxPool2d(kernel_size=2, stride=2)
+        self.maxpool=torch.nn.MaxPool2d(kernel_size=(2,2), stride=(2,2), ceil_mode=False)
         self.relu=torch.nn.ReLU()
 
         self.bn1 = torch.nn.BatchNorm2d(32, affine=True, track_running_stats=False)
@@ -56,18 +57,21 @@ class HATModel(torch.nn.Module):
         # Gated
         h=self.maxpool(self.bn1(self.relu(self.c1(x))))
         h=h*gc1.view(1,-1,1,1).expand_as(h)
+        #print(h.size())
         h=self.maxpool(self.bn2(self.relu(self.c2(h))))
         h=h*gc2.view(1,-1,1,1).expand_as(h)
         h=self.maxpool(self.bn3(self.relu(self.c3(h))))
         h=h*gc3.view(1,-1,1,1).expand_as(h)
+        #print(h.size())
         h=self.maxpool(self.bn4(self.relu(self.c4(h))))
-        h=h*gc3.view(1,-1,1,1).expand_as(h)
+        h=h*gc4.view(1,-1,1,1).expand_as(h)
         h=h.view(x.size(0),-1)
         
         h = self.last[t](h)
         return h, masks
 
     def mask(self,t,s=1):
+        t=torch.LongTensor([t]).to(self.device)
         gc1=self.gate(s*self.ec1(t))
         gc2=self.gate(s*self.ec2(t))
         gc3=self.gate(s*self.ec3(t))
