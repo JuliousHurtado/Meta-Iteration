@@ -72,7 +72,7 @@ class HAT(object):
                 p.grad.data*=self.smax/s*num/den
 
         # Apply step
-        torch.nn.utils.clip_grad_norm(model.parameters(),self.clipgrad)
+        torch.nn.utils.clip_grad_norm_(model.parameters(),self.clipgrad)
         optimizer.step()
 
         # Constrain embeddings
