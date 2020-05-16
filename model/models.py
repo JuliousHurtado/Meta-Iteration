@@ -110,11 +110,11 @@ class ConvBase(nn.Sequential):
         super(ConvBase, self).__init__(*core)
 
 class MiniImagenetCNN(nn.Module):
-    def __init__(self, output_size, hidden_size=32, layers=4, task_normalization=False):
+    def __init__(self, output_size, hidden_size=32, layers=4, task_normalization=False, in_channels=3):
         super(MiniImagenetCNN, self).__init__()
         self.base = ConvBase(output_size=hidden_size,
                              hidden=hidden_size,
-                             channels=3,
+                             channels=in_channels,
                              max_pool=True,
                              layers=layers,
                              max_pool_factor=4 // layers,
@@ -141,7 +141,7 @@ class MiniImagenetCNN(nn.Module):
 
 
 class TaskManager(nn.Module):
-    def __init__(self, outputs_size, ways=5, hidden_size=32, layers=4, task_normalization=False, device = 'cpu'):
+    def __init__(self, outputs_size, ways=5, hidden_size=32, layers=4, task_normalization=False, in_channels=3 ,device = 'cpu'):
         super(TaskManager, self).__init__()
         """
         outputs_size -> Is a list of the amount of classes for the different tasks, 
@@ -162,7 +162,7 @@ class TaskManager(nn.Module):
 
         self.task['meta'] = {'linear': nn.Linear(4 * hidden_size, ways).to(device)}
         self.task['meta']['norm'] = [ TaskNormalization(hidden_size, hidden_size).to(device) for _ in range(layers) ]
-        self.model = MiniImagenetCNN(ways, hidden_size=hidden_size, layers=layers, task_normalization=task_normalization)
+        self.model = MiniImagenetCNN(ways, hidden_size=hidden_size, layers=layers, task_normalization=task_normalization, in_channels=in_channels)
 
         self.setLinearLayer('meta')
         self.setTaskNormalizationLayer('meta')

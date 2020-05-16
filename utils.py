@@ -93,13 +93,14 @@ def getArguments():
     parser.add_argument('--meta-label', type=str, default='random', choices=['rotnet', 'random', 'supervised', 'ewc'])
 
     #---------------------Datasets---------------------------------#
-    parser.add_argument('--dataset', type=str, default='cifar100', choices=['cifar100', 'multi', 'cifar10'])
+    parser.add_argument('--dataset', type=str, default='cifar100', choices=['cifar100', 'multi', 'cifar10', 'pmnist'])
     parser.add_argument('--train-dataset', type=str, default='./')
     parser.add_argument('--val-dataset', type=str, default='./')
     parser.add_argument('--amount-split', type=int, default=10)
 
     #---------------------Model------------------------------------#
     parser.add_argument('--hidden-size', type=int, default=32)
+    parser.add_argument('--in-channels', type=int, default=3)
     parser.add_argument('--num-layers', type=int, default=4)
     parser.add_argument('--task-normalization', type=str2bool, default=True)
 

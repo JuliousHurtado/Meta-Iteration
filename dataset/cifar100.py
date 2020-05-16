@@ -163,6 +163,23 @@ class iCIFAR100(iCIFAR10):
         'md5': '7973b15100ade9c7d40fb424638fde48',
     }
 
+    def get_sample(self, sample_size):
+        sample_idx = random.sample(range(len(self)), sample_size)
+        temp = []
+        for img in self.data[sample_idx]:
+            try:
+                img = Image.fromarray(img)
+            except:
+                pass
+
+            try:
+                if self.transform is not None: img = self.transform(img)
+            except:
+                pass
+
+            temp.append(img)
+        return temp
+
 
 
 class DatasetGen(object):
