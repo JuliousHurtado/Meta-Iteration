@@ -11,6 +11,7 @@ import torch.utils.data as data
 from torchvision import datasets, transforms
 from sklearn.utils import shuffle
 from utils import *
+import copy
 
 
 class PermutedMNIST(datasets.MNIST):

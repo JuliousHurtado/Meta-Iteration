@@ -17,6 +17,7 @@ else:
 
 import torch.utils.data as data
 import numpy as np
+import copy
 
 import torch
 from torchvision import datasets, transforms
