@@ -93,7 +93,7 @@ def getArguments():
     parser.add_argument('--meta-label', type=str, default='random', choices=['rotnet', 'random', 'supervised', 'ewc'])
 
     #---------------------Datasets---------------------------------#
-    parser.add_argument('--dataset', type=str, default='tiny-imagenet', choices=['tiny-imagenet', 'multi', 'cifar10'])
+    parser.add_argument('--dataset', type=str, default='cifar100', choices=['cifar100', 'multi', 'cifar10'])
     parser.add_argument('--train-dataset', type=str, default='./')
     parser.add_argument('--val-dataset', type=str, default='./')
     parser.add_argument('--amount-split', type=int, default=10)

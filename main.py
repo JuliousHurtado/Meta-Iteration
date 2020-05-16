@@ -11,6 +11,7 @@ from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaR
 #from dataset.getDataloaders import getTinyImageNet, getRandomDataset, getDividedCifar10
 from dataset.cifar10 import DatasetGen as cifar10
 from dataset.multidataset import DatasetGen as multi_cls
+from dataset.cifar100 import DatasetGen as cifar100
 
 from train.meta_training import trainingProcessMeta
 from train.task_training import trainingProcessTask, addResults
@@ -135,7 +136,9 @@ if __name__ == '__main__':
     elif args.dataset == 'multi':
         data_generators = multi_cls(args)
         args.dataset_order = data_generators.datasets_names
-
+    elif args.dataset == 'cifar100':
+        data_generators = cifar100(args)
+        
     cls_per_task = data_generators.taskcla
 
     model = getModel(args, cls_per_task, device)
