@@ -16,7 +16,7 @@ from method.si import SI
 
 #--------------------------Load Model------------------------------#
 def getModel(args, cls_per_task, device):
-    return TaskManager(cls_per_task, args.ways, args.hidden_size, args.num_layers, args.task_normalization, device).to(device)
+    return TaskManager(cls_per_task, args.ways, args.hidden_size, args.num_layers, args.task_normalization, args.in_channels, device).to(device)
     #return MiniImagenetCNN(args.ways, args.hidden_size, args.num_layers, args.task_normalization).to(device)
 
 def getMetaAlgorithm(model, fast_lr, first_order):

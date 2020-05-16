@@ -12,6 +12,7 @@ from utils import getArguments, getModel, getMetaAlgorithm, saveValues, getMetaR
 from dataset.cifar10 import DatasetGen as cifar10
 from dataset.multidataset import DatasetGen as multi_cls
 from dataset.cifar100 import DatasetGen as cifar100
+from dataset.pmnist import DatasetGen as pmnist
 
 from train.meta_training import trainingProcessMeta
 from train.task_training import trainingProcessTask, addResults
@@ -138,6 +139,9 @@ if __name__ == '__main__':
         args.dataset_order = data_generators.datasets_names
     elif args.dataset == 'cifar100':
         data_generators = cifar100(args)
+    elif args.dataset == 'pmnist':
+        data_generators = pmnist(args)
+        args.in_channels = 1
         
     cls_per_task = data_generators.taskcla
 
