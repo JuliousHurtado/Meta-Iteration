@@ -33,6 +33,9 @@ def trainingProcessTask(data_loader, learner, optimizer, regs, device):
         if regs['reg'] and regs['use']['gs_mask']:
             regs['reg'].setGradZero(learner)
 
+        if regs['use']['si'] or regs['use']['mas'] or regs['use']['ewc']:
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(),10000)
+
         optimizer.step()
 
         if regs['reg'] and regs['use']['si']:

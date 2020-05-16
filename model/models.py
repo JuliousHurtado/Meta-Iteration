@@ -126,7 +126,7 @@ class MiniImagenetCNN(nn.Module):
 
     def forward(self, x):
         x = self.base(x)
-        x = self.linear(x.view(x.size(0), 4 * self.hidden_size))
+        x = self.linear(x.view(x.size(0), -1))#4 * self.hidden_size))
         return x
 
     def setTaskNormalizationLayer(self, layers):
@@ -149,6 +149,11 @@ class TaskManager(nn.Module):
 
         Task 0 is meta learning
         """
+        if in_channels == 3:
+            lin_size_factor = 4
+        else:
+            lin_size_factor = 1
+
         self.task = {}
         self.task_normalization = task_normalization
         for i,out in enumerate(outputs_size):
@@ -156,11 +161,11 @@ class TaskManager(nn.Module):
             if task_normalization:
                 for _ in range(layers): 
                     norm_layers.append(TaskNormalization(hidden_size, hidden_size).to(device))
-            linear_layer = nn.Linear(4 * hidden_size, out).to(device)
+            linear_layer = nn.Linear(lin_size_factor * hidden_size, out).to(device)
 
             self.task[i] = { 'norm': norm_layers, 'linear': linear_layer }
 
-        self.task['meta'] = {'linear': nn.Linear(4 * hidden_size, ways).to(device)}
+        self.task['meta'] = {'linear': nn.Linear(lin_size_factor * hidden_size, ways).to(device)}
         self.task['meta']['norm'] = [ TaskNormalization(hidden_size, hidden_size).to(device) for _ in range(layers) ]
         self.model = MiniImagenetCNN(ways, hidden_size=hidden_size, layers=layers, task_normalization=task_normalization, in_channels=in_channels)
 
