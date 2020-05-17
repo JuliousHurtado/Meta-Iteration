@@ -9,12 +9,17 @@ def compute_conv_output_size(Lin,kernel_size,stride=1,padding=0,dilation=1):
 
 class HATModel(torch.nn.Module):
 
-    def __init__(self,taskcla, device):
+    def __init__(self,taskcla, device, in_channels=3):
         super(HATModel,self).__init__()
 
-        ncha,size,_= [3,32,32]
+        ncha,size,_= [in_channels,32,32]
         self.taskcla=taskcla
         self.device=device
+
+        if in_channels == 3:
+            lin_size_factor = 4
+        else:
+            lin_size_factor = 1
 
         self.c1=torch.nn.Conv2d(ncha, 32, kernel_size=3, stride=(1,1), padding=1,bias=True)
         s=compute_conv_output_size(size,3)
@@ -39,7 +44,7 @@ class HATModel(torch.nn.Module):
 
         self.last=torch.nn.ModuleList()
         for n in self.taskcla:
-            self.last.append(torch.nn.Linear(4*32,n))
+            self.last.append(torch.nn.Linear(lin_size_factor*32,n))
 
         self.gate=torch.nn.Sigmoid()
         # All embedding stuff should start with 'e'

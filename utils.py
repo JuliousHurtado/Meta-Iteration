@@ -19,7 +19,7 @@ from method.hat import HAT
 #--------------------------Load Model------------------------------#
 def getModel(args, cls_per_task, device, use_hat=False):
     if use_hat:
-        return HATModel(cls_per_task, device).to(device)
+        return HATModel(cls_per_task, device, args.in_channels).to(device)
     return TaskManager(cls_per_task, args.ways, args.hidden_size, args.num_layers, args.task_normalization, device).to(device)
     #return MiniImagenetCNN(args.ways, args.hidden_size, args.num_layers, args.task_normalization).to(device)
 
@@ -102,10 +102,11 @@ def getArguments():
     parser.add_argument('--meta-label', type=str, default='random', choices=['rotnet', 'random', 'supervised', 'ewc'])
 
     #---------------------Datasets---------------------------------#
-    parser.add_argument('--dataset', type=str, default='tiny-imagenet', choices=['tiny-imagenet', 'multi', 'cifar10'])
+    parser.add_argument('--dataset', type=str, default='multi', choices=['cifar100', 'multi', 'pmnist'])
     parser.add_argument('--train-dataset', type=str, default='./')
     parser.add_argument('--val-dataset', type=str, default='./')
     parser.add_argument('--amount-split', type=int, default=10)
+    parser.add_argument('--in-channels', type=int, default=3)
 
     #---------------------Model------------------------------------#
     parser.add_argument('--hidden-size', type=int, default=32)

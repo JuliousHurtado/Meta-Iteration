@@ -11,6 +11,7 @@ import torch.utils.data as data
 from torchvision import datasets, transforms
 from sklearn.utils import shuffle
 from utils import *
+import copy
 
 
 class PermutedMNIST(datasets.MNIST):
@@ -25,7 +26,7 @@ class PermutedMNIST(datasets.MNIST):
 
         self.data, self.targets = torch.load(os.path.join(self.processed_folder, data_file))
 
-        self.data = torch.stack([img.float().view(-1)[permute_idx] for img in self.data])
+        self.data = torch.stack([img.float().view(-1)[permute_idx].view(1,28,28) for img in self.data])
         self.tl = (task_num) * torch.ones(len(self.data),dtype=torch.long)
         self.td = (task_num+1) * torch.ones(len(self.data),dtype=torch.long)
 
@@ -45,6 +46,15 @@ class PermutedMNIST(datasets.MNIST):
     def __len__(self):
         return self.data.size(0)
 
+    def get_sample(self, sample_size):
+        sample_idx = random.sample(range(len(self)), sample_size)
+        temp = []
+        for img in self.data[sample_idx]:
+            if self.transform is not None:
+                img = self.transform(img)
+
+            temp.append(img)
+        return temp
 
 
 class DatasetGen(object):
@@ -56,7 +66,7 @@ class DatasetGen(object):
         self.batch_size=args.batch_size
         self.pc_valid=0.15
         # self.num_samples = args.samples
-        self.num_tasks = 10
+        self.num_task = 10
         self.root = './data'
         # self.use_memory = args.use_memory
 
@@ -70,7 +80,7 @@ class DatasetGen(object):
         std = (0.3081,)
         self.transformation = transforms.Compose([transforms.ToTensor(),transforms.Normalize(mean, std)])
 
-        self.taskcla = [ 10 for t in range(self.num_tasks)]
+        self.taskcla = [ 10 for t in range(self.num_task)]
 
         self.train_set, self.test_set = {}, {}
         self.indices = {}

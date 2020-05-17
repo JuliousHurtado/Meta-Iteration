@@ -17,6 +17,7 @@ else:
 
 import torch.utils.data as data
 import numpy as np
+import copy
 
 import torch
 from torchvision import datasets, transforms
@@ -179,6 +180,7 @@ class iCIFAR100(iCIFAR10):
 
             temp.append(img)
         return temp
+
 
 
 class DatasetGen(object):
