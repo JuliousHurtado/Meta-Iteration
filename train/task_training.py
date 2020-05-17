@@ -34,7 +34,7 @@ def trainingProcessTask(data_loader, learner, optimizer, regs, device):
             regs['reg'].setGradZero(learner)
 
         if regs['reg'] and (regs['use']['si'] or regs['use']['mas'] or regs['use']['ewc']):
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(),10000)
+            torch.nn.utils.clip_grad_norm_(learner.parameters(),50)
 
         optimizer.step()
 
