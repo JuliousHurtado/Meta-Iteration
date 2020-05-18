@@ -8,12 +8,12 @@ from torch.nn import functional as F
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class HAT(object):
-    def __init__(self, model: nn.Module, smax: float):
+    def __init__(self, model: nn.Module, smax: float, lamb: float):
         self.smax=400
-        self.lamb=0.75
+        self.lamb=lamb
         self.model = model
         self.mask_pre = None
-        self.clipgrad=10000
+        self.clipgrad=1000
         self.thres_cosh=50
         self.thres_emb=6
 
@@ -21,7 +21,7 @@ class HAT(object):
         mask=self.model.mask(t,s=self.smax)
         for i in range(len(mask)):
             mask[i]=mask[i].data.clone()
-        if t==0:
+        if self.mask_pre is None:
             self.mask_pre=mask
         else:
             for i in range(len(self.mask_pre)):
@@ -33,7 +33,7 @@ class HAT(object):
             if vals is not None:
                 self.mask_back[n]=1-vals
 
-    def criterion(self,outputs,targets,masks):
+    def criterion(self,outputs,targets,masks,t):
         reg=0
         count=0
         if self.mask_pre is not None:
@@ -45,7 +45,7 @@ class HAT(object):
             for m in masks:
                 reg+=m.sum()
                 count+=np.prod(m.size()).item()
-        reg/=count
+        reg/=(count+1e-5)
         return self.ce(outputs,targets)+self.lamb*reg,reg
 
     def __call__(self, model, e, len_data, t, criterion, inputs, targets, optimizer):
@@ -53,7 +53,7 @@ class HAT(object):
         self.ce=criterion
         
         output,masks=model.forward(t, inputs, s=s)
-        loss,_=self.criterion(output,targets,masks)
+        loss,_=self.criterion(output,targets,masks,t)
 
         optimizer.zero_grad()
         loss.backward()
@@ -70,10 +70,12 @@ class HAT(object):
                 num=torch.cosh(torch.clamp(s*p.data,-self.thres_cosh,self.thres_cosh))+1
                 den=torch.cosh(p.data)+1
                 p.grad.data*=self.smax/s*num/den
+                
 
         # Apply step
         torch.nn.utils.clip_grad_norm_(model.parameters(),self.clipgrad)
         optimizer.step()
+
 
         # Constrain embeddings
         for n,p in self.model.named_parameters():

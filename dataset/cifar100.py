@@ -199,7 +199,7 @@ class DatasetGen(object):
         self.shots=args.shots
         self.meta_label=args.meta_label
 
-        self.num_task = 20
+        self.num_task = args.amount_split#20
         self.num_classes = 100
 
 

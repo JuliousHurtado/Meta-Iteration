@@ -62,7 +62,7 @@ def getTaskRegularizer(model, task_reg, ewc_importance, c_theta, c_lambda, smax)
         reg = SI(model, c_lambda)
 
     if task_reg == 'hat':
-        reg = HAT(model, smax)
+        reg = HAT(model, smax, c_lambda)
 
     return { 'reg': reg, 'use': reg_used}
 
