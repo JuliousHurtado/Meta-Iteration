@@ -53,7 +53,7 @@ class MAS(object):
 
             for n, p in model.named_parameters():
                 if p.requires_grad:
-                    self.reg_params[n]['omega'] += 1e-3*(p.grad.data.abs_() + self.reg_params[n]['prev_omega']*i)/(i+1)
+                    self.reg_params[n]['omega'] += (p.grad.data.abs_() + self.reg_params[n]['prev_omega']*i)/(i+1)
 
     def __call__(self, model):
         loss = 0

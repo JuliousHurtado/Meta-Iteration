@@ -138,3 +138,18 @@ def saveValues(name_file, results, model, args):
             'args': args,
             'checkpoint': model.state_dict()
             }, name_file)
+
+if __name__ == '__main__':
+    model = TaskManager([10,10,10,10,10], 5, 32, 4, True, 3, 'cpu')
+    linear_layer = torch.nn.Linear(3 * 32, 5)
+    print(model)
+
+    reg = GroupMask(0.001)
+    reg.setMasks(model)
+
+    x = torch.Tensor(200,3,32,32)
+
+    torch.save({'checkpoint': model.state_dict()}, 'temp.pth')
+    torch.save({'checkpoint': linear_layer.state_dict()}, 'lin_temp.pth')
+    torch.save({'checkpoint': reg.masks}, 'mask_temp.pth')
+    torch.save({'checkpoint': x}, 'x_temp.pth')
