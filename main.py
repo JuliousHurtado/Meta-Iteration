@@ -53,6 +53,7 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
             'valid_acc': [],
             'test_acc': [],
             'final_acc': [],
+            'sparsity': [],
         }
 
         task_dataloader = data_generators.get(i)
