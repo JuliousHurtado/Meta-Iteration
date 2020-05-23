@@ -111,8 +111,10 @@ def addResults(model, data_generators, results, device, task, opti, all_tasks=Fa
             
             else:
                 if masks:
-                    sparse = (masks[j] > 0).sum().float()/masks[j].size(0)
-                    results[j]['final_acc'].append(sparse)
+                    sparse = []
+                    for m in masks[j]:
+                        sparse.append((m > 0).sum().float()/m.size(0))
+                    results[j]['sparsity'].append(sparse)
                     test_accuracy = test_normal_masks(model, data_generators[j]['test'], device, masks[j])
                 else:
                     test_accuracy = test_normal(model, data_generators[j]['test'], device)
