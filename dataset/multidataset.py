@@ -81,7 +81,20 @@ class DatasetGen(object):
         self.pin_memory = True
 
         if args.set_order:
-            self.datasets_idx = [1, 4, 2, 0, 3] #3, 0, 2, 1, 4]
+            if args.order_idx == 0:
+                self.datasets_idx = [1, 4, 2, 0, 3] #3, 0, 2, 1, 4]
+            if args.order_idx == 1:
+                self.datasets_idx = [4, 2, 1, 0, 3]
+            if args.order_idx == 2:
+                self.datasets_idx = [2, 4, 0, 3, 1]
+            if args.order_idx == 3:
+                self.datasets_idx = [0, 1, 3, 2, 4]
+            if args.order_idx == 4:
+                self.datasets_idx = [3, 4, 1, 0, 2]
+            if args.order_idx == 5:
+                self.datasets_idx = [1, 2, 0, 4, 3]
+            if args.order_idx == 6:
+                self.datasets_idx = [3, 0, 2, 1, 4]
         else:
             self.datasets_idx = list(np.random.permutation(self.num_task))
         print('Task order =', [list(classes_datasets.keys())[item] for item in self.datasets_idx])
