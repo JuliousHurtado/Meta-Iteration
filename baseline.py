@@ -69,10 +69,10 @@ def joint_learn(args, device):
         data_generators = multi_cls(args)
         
         train = join_all_datasets(data_generators, 'train', 5)
-        task_dataloader['train'] = DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
+        task_dataloader['train'] = torch.utils.data.DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
 
         test = join_all_datasets(data_generators, 'test', 5)
-        task_dataloader['test'] = DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
+        task_dataloader['test'] = torch.utils.data.DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
 
         cls_per_task = [50]
 
@@ -83,10 +83,10 @@ def joint_learn(args, device):
         transformation = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
 
         train = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transformation)
-        task_dataloader['train'] = DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
+        task_dataloader['train'] = torch.utils.data.DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
 
         test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transformation)
-        task_dataloader['test'] = DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
+        task_dataloader['test'] = torch.utils.data.DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
 
         cls_per_task = [100]
 
@@ -95,10 +95,10 @@ def joint_learn(args, device):
         args.in_channels = 1
 
         train = join_all_datasets(data_generators, 'train', 10)
-        task_dataloader['train'] = DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
+        task_dataloader['train'] = torch.utils.data.DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
 
         test = join_all_datasets(data_generators, 'test', 10)
-        task_dataloader['test'] = DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
+        task_dataloader['test'] = torch.utils.data.DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
 
         cls_per_task = [100]
 
@@ -113,6 +113,7 @@ def joint_learn(args, device):
         print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, args.dataset), flush=True)
             
     acc_test = test_normal(net, task_dataloader['test'], device)
+    print("Test Accuracy in {}: {}".format(args.dataset, acc_test))
 
 if __name__ == '__main__':
     parser = getArguments()
