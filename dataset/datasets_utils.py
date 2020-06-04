@@ -746,7 +746,7 @@ class JoinDatasets(torch.utils.data.Dataset):
         self.target = torch.stack(self.target)
 
     def __getitem__(self, index):
-        img, target = self.data[index], self.targets[index]
+        img, target = self.data[index], self.target[index]
 
         return img, target
 
@@ -757,17 +757,14 @@ class JoinDatasets(torch.utils.data.Dataset):
 def join_all_datasets(data_generators, split, num_tasks):
     join_dataset = JoinDatasets()
 
-    for i in range(num_tasks):
+    for i in range(len(num_tasks)):
         task_dataloader = data_generators.get(i)
-        in_label = len(list(set(join_dataset.target)))
+
         for inputs, labels in task_dataloader[i][split]:
 
-            for i in range(inputs.size(0)):
-                join_dataset.data.append(inputs[i])
-                join_dataset.target.append(labels[i]+in_label)
-
-    print(join_dataset.target[-30:])
+            for j in range(inputs.size(0)):
+                join_dataset.data.append(inputs[j])
+                join_dataset.target.append(labels[j]+num_tasks[i]*i)
 
     join_dataset.stack_data()
-
     return join_dataset

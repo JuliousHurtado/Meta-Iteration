@@ -64,14 +64,17 @@ def scratch_learn(args, device):
         print(results[i]['final_acc'])
 
 def joint_learn(args, device):
+    args.epochs = 100
+
     task_dataloader = {}
     if args.dataset == 'multi':
         data_generators = multi_cls(args)
-        
-        train = join_all_datasets(data_generators, 'train', 5)
+        cls_per_task = data_generators.taskcla
+
+        train = join_all_datasets(data_generators, 'train', cls_per_task)
         task_dataloader['train'] = torch.utils.data.DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
 
-        test = join_all_datasets(data_generators, 'test', 5)
+        test = join_all_datasets(data_generators, 'test', cls_per_task)
         task_dataloader['test'] = torch.utils.data.DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
 
         cls_per_task = [50]
@@ -93,26 +96,27 @@ def joint_learn(args, device):
     elif args.dataset == 'pmnist':
         data_generators = pmnist(args)
         args.in_channels = 1
+        cls_per_task = data_generators.taskcla
 
-        train = join_all_datasets(data_generators, 'train', 10)
+        train = join_all_datasets(data_generators, 'train', cls_per_task)
         task_dataloader['train'] = torch.utils.data.DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
 
-        test = join_all_datasets(data_generators, 'test', 10)
+        test = join_all_datasets(data_generators, 'test', cls_per_task)
         task_dataloader['test'] = torch.utils.data.DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
 
         cls_per_task = [100]
 
     model = getModel(args, cls_per_task, device)
-    task_regs = { 'reg': None, 'use': {'ewc': False, 'gs_mask': False, 'mas': False, 'si': False}}
+    task_reg = { 'reg': None, 'use': {'ewc': False, 'gs_mask': False, 'mas': False, 'si': False}}
 
     model.setLinearLayer(0)
-    optim.SGD(model.parameters(), args.lr, momentum=0.0, weight_decay=0.0)
+    opti = optim.SGD(model.parameters(), args.lr, momentum=0.0, weight_decay=0.0)
 
     for e in range(args.epochs):
-        loss_task, acc_task = trainingProcessTask(task_dataloader['train'], net, opti, task_reg, device)          
+        loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, opti, task_reg, device)          
         print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, args.dataset), flush=True)
             
-    acc_test = test_normal(net, task_dataloader['test'], device)
+    acc_test = test_normal(model, task_dataloader['test'], device)
     print("Test Accuracy in {}: {}".format(args.dataset, acc_test))
 
 if __name__ == '__main__':
