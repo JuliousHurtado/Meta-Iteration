@@ -117,35 +117,6 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
     for i in range(data_generators.num_task):
         print(results[i]['final_acc'])
 
-def joint_learn(args, data_generators, model, device, meta_regs, task_reg):
-    for i in range(data_generators.num_task):
-        net = copy.deepcopy(model)
-
-        task_dataloader = data_generators.get(i)
-        opti = adjustModelTask(net, i, lr)
-        
-        results[i] = {
-            'meta_loss': [],
-            'meta_acc': [],
-            'train_acc': [],
-            'train_loss': [],
-            'valid_acc': [],
-            'test_acc': [],
-            'final_acc': [],
-            'sparsity': [],
-        }
-
-        for e in range(args.epochs):
-            loss_task, acc_task = trainingProcessTask(task_dataloader[i]['train'], net, opti, task_reg, device) 
-            results[i]['train_loss'].append(loss_task)
-            results[i]['train_acc'].append(acc_task)            
-            print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, i+1), flush=True)
-            
-        addResults(net, task_dataloader, results, device, i, opti, False, True, None, False)
-
-    for i in range(data_generators.num_task):
-        print(results[i]['final_acc'])
-
 if __name__ == '__main__':
     parser = getArguments()
     args = parser.parse_args()
@@ -188,5 +159,4 @@ if __name__ == '__main__':
                     args.task_reg, args.ewc_importance,
                     args.reg_theta, args.reg_lambda)
 
-    # main(args, data_generators, meta_model, device, meta_regs, task_regs)
-    joint_learn(args, data_generators, meta_model, device, meta_regs, task_regs)
+    main(args, data_generators, meta_model, device, meta_regs, task_regs)

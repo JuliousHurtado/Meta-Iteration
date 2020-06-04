@@ -733,3 +733,41 @@ class notMNIST_(torch.utils.data.Dataset):
 
             temp.append(img)
         return temp
+
+
+class JoinDatasets(torch.utils.data.Dataset):
+
+    def __init__(self):
+        self.data = []
+        self.target = []
+
+    def stack_data(self):
+        self.data = torch.stack(self.data)
+        self.target = torch.stack(self.target)
+
+    def __getitem__(self, index):
+        img, target = self.data[index], self.targets[index]
+
+        return img, target
+
+    def __len__(self):
+        return len(self.data)
+
+
+def join_all_datasets(data_generators, split, num_tasks):
+    join_dataset = JoinDatasets()
+
+    for i in range(num_tasks):
+        task_dataloader = data_generators.get(i)
+        in_label = len(list(set(join_dataset.target)))
+        for inputs, labels in task_dataloader[i][split]:
+
+            for i in range(inputs.size(0)):
+                join_dataset.data.append(inputs[i])
+                join_dataset.target.append(labels[i]+in_label)
+
+    print(join_dataset.target[-30:])
+
+    join_dataset.stack_data()
+
+    return join_dataset
