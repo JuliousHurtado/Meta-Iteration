@@ -80,15 +80,13 @@ def joint_learn(args, device):
         cls_per_task = [50]
 
     elif args.dataset == 'cifar100':
-        mean=[x/255 for x in [125.3,123.0,113.9]]
-        std=[x/255 for x in [63.0,62.1,66.7]]
+        data_generators = cifar100(args)
+        cls_per_task = data_generators.taskcla
 
-        transformation = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
-
-        train = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transformation)
+        train = join_all_datasets(data_generators, 'train', cls_per_task)
         task_dataloader['train'] = torch.utils.data.DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
 
-        test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transformation)
+        test = join_all_datasets(data_generators, 'test', cls_per_task)
         task_dataloader['test'] = torch.utils.data.DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
 
         cls_per_task = [100]
