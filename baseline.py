@@ -5,6 +5,7 @@ import copy
 import numpy as np
 from torch import nn
 from torch import optim
+import torchvision
 
 from model.models import TaskNormalization
 from utils import getArguments, getModel
@@ -64,7 +65,7 @@ def scratch_learn(args, device):
         print(results[i]['final_acc'])
 
 def joint_learn(args, device):
-    args.epochs = 100
+    args.epochs = 250
 
     task_dataloader = {}
     if args.dataset == 'multi':
@@ -80,14 +81,30 @@ def joint_learn(args, device):
         cls_per_task = [50]
 
     elif args.dataset == 'cifar100':
-        data_generators = cifar100(args)
-        cls_per_task = data_generators.taskcla
+        # data_generators = cifar100(args)
+        # cls_per_task = data_generators.taskcla
 
-        train = join_all_datasets(data_generators, 'train', cls_per_task)
-        task_dataloader['train'] = torch.utils.data.DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
+        # train = join_all_datasets(data_generators, 'train', cls_per_task)
+        # task_dataloader['train'] = torch.utils.data.DataLoader(train, shuffle=True, num_workers=4, batch_size=64)
 
-        test = join_all_datasets(data_generators, 'test', cls_per_task)
-        task_dataloader['test'] = torch.utils.data.DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
+        # test = join_all_datasets(data_generators, 'test', cls_per_task)
+        # task_dataloader['test'] = torch.utils.data.DataLoader(test, shuffle=True, num_workers=4, batch_size=64)
+
+        mean = (0.5070751592371323, 0.48654887331495095, 0.4409178433670343)
+        std = (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
+
+        transform = torchvision.transforms.Compose([
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize(mean, std)
+            ])
+
+        cifar100_training = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform)
+        task_dataloader['train'] = torch.utils.data.DataLoader(
+            cifar100_training, shuffle=True, num_workers=4, batch_size=64)
+
+        cifar100_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform)
+        task_dataloader['test'] = torch.utils.data.DataLoader(
+            cifar100_test, shuffle=True, num_workers=4, batch_size=64)
 
         cls_per_task = [100]
 
@@ -110,6 +127,7 @@ def joint_learn(args, device):
     model.setLinearLayer(0)
     opti = optim.SGD(model.parameters(), args.lr, momentum=0.0, weight_decay=0.0)
 
+    print(model)
     for e in range(args.epochs):
         loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, opti, task_reg, device)          
         print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, args.dataset), flush=True)
