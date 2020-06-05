@@ -183,9 +183,10 @@ def joint_learn(args, device):
 
         loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, opti, task_reg, device)          
         print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, args.dataset), flush=True)
-            
-    acc_test = test_normal(model, task_dataloader['test'], device)
-    print("Test Accuracy in {}: {}".format(args.dataset, acc_test))
+        
+        if e % 20 == 0:
+            acc_test = test_normal(model, task_dataloader['test'], device)
+            print("Test Accuracy in {}: {}".format(args.dataset, acc_test))
 
 if __name__ == '__main__':
     parser = getArguments()
