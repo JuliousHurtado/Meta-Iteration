@@ -7,6 +7,8 @@ from torch import nn
 from torch import optim
 import torchvision
 
+import torchvision.models as models
+
 from model.models import TaskNormalization
 from utils import getArguments, getModel
 
@@ -18,6 +20,48 @@ from dataset.datasets_utils import join_all_datasets
 
 from train.meta_training import trainingProcessMeta
 from train.task_training import trainingProcessTask, test_normal, addResults
+
+
+class AlexNet(nn.Module):
+
+    def __init__(self, num_classes=1000):
+        super(AlexNet, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(64, 192, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(192, 384, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(384, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+        )
+        #self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
+        self.classifier = nn.Sequential(
+            nn.Dropout(),
+            nn.Linear(256 * 3 * 3, 4096),
+            nn.ReLU(inplace=True),
+            # nn.Dropout(),
+            # nn.Linear(4096, 4096),
+            # nn.ReLU(inplace=True),
+            nn.Linear(4096, num_classes),
+        )
+
+    def forward(self, x):
+
+        x = self.features(x)
+        # x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
+
+
+
 
 def scratch_learn(args, device):
     if args.dataset == 'multi':
@@ -121,14 +165,22 @@ def joint_learn(args, device):
 
         cls_per_task = [100]
 
-    model = getModel(args, cls_per_task, device)
+    #model = getModel(args, cls_per_task, device)
+    model = AlexNet(100).to(device)
     task_reg = { 'reg': None, 'use': {'ewc': False, 'gs_mask': False, 'mas': False, 'si': False}}
 
-    model.setLinearLayer(0)
-    opti = optim.SGD(model.parameters(), args.lr, momentum=0.0, weight_decay=0.0)
+    #model.setLinearLayer(0)
+    #opti = optim.SGD(model.parameters(), args.lr, momentum=0.0, weight_decay=0.0)
+    #opti = optim.Adam(model.parameters(), args.lr)
+
+    opti = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    train_scheduler = optim.lr_scheduler.MultiStepLR(opti, milestones=[60, 120, 160], gamma=0.2)
 
     print(model)
     for e in range(args.epochs):
+        if e > 20:
+            train_scheduler.step(e)
+
         loss_task, acc_task = trainingProcessTask(task_dataloader['train'], model, opti, task_reg, device)          
         print('Task: Task {4} Epoch [{0}/{1}] \t Train Loss: {2:1.4f} \t Train Acc {3:3.2f} %'.format(e, args.epochs, loss_task, acc_task*100, args.dataset), flush=True)
             
