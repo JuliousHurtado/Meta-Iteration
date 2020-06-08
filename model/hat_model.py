@@ -159,7 +159,7 @@ class HATOriginal(torch.nn.Module):
         self.efc2.weight.data.uniform_(lo,hi)
         #"""
 
-        return
+        # return
 
     def forward(self,t,x,s=1):
         # Gates
@@ -177,10 +177,12 @@ class HATOriginal(torch.nn.Module):
         h=h*gfc1.expand_as(h)
         h=self.drop2(self.relu(self.fc2(h)))
         h=h*gfc2.expand_as(h)
-        y=[]
-        for i,_ in self.taskcla:
-            y.append(self.last[i](h))
-        return y,masks
+        # y=[]
+        # for i,_ in self.taskcla:
+        #     y.append(self.last[i](h))
+
+        h = self.last[t](h)
+        return h, masks
 
     def mask(self,t,s=1):
         t=torch.LongTensor([t]).to(self.device)
