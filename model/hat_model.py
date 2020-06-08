@@ -115,20 +115,20 @@ class HATModel(torch.nn.Module):
 class HATOriginal(torch.nn.Module):
 
     def __init__(self,taskcla, device, in_channels=3):
-        super(Net,self).__init__()
+        super(HATOriginal,self).__init__()
 
         ncha,size,_= [in_channels,32,32]
         self.taskcla=taskcla
         self.device=device
 
         self.c1=torch.nn.Conv2d(ncha,64,kernel_size=size//8)
-        s=utils.compute_conv_output_size(size,size//8)
+        s=compute_conv_output_size(size,size//8)
         s=s//2
         self.c2=torch.nn.Conv2d(64,128,kernel_size=size//10)
-        s=utils.compute_conv_output_size(s,size//10)
+        s=compute_conv_output_size(s,size//10)
         s=s//2
         self.c3=torch.nn.Conv2d(128,256,kernel_size=2)
-        s=utils.compute_conv_output_size(s,2)
+        s=compute_conv_output_size(s,2)
         s=s//2
         self.smid=s
         self.maxpool=torch.nn.MaxPool2d(2)
@@ -139,7 +139,8 @@ class HATOriginal(torch.nn.Module):
         self.fc1=torch.nn.Linear(256*self.smid*self.smid,2048)
         self.fc2=torch.nn.Linear(2048,2048)
         self.last=torch.nn.ModuleList()
-        for t,n in self.taskcla:
+
+        for n in self.taskcla:
             self.last.append(torch.nn.Linear(2048,n))
 
         self.gate=torch.nn.Sigmoid()
