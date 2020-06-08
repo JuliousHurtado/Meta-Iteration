@@ -7,7 +7,7 @@ from collections import defaultdict
 import learn2learn as l2l
 
 from model.models import MiniImagenetCNN, TaskManager
-from model.hat_model import HATModel
+from model.hat_model import HATModel, HATOriginal
 from method.maml import MAML
 from method.regularizer import FilterReg, LinearReg, FilterSparseReg, GroupMask
 from method.ewc import EWC
@@ -20,6 +20,7 @@ from method.hat import HAT
 def getModel(args, cls_per_task, device, use_hat=False):
     if use_hat:
         return HATModel(cls_per_task, device, args.in_channels).to(device)
+        return HATOriginal(cls_per_task, device, args.in_channels).to(device)
     return TaskManager(cls_per_task, args.ways, args.hidden_size, args.num_layers, args.task_normalization, device).to(device)
     #return MiniImagenetCNN(args.ways, args.hidden_size, args.num_layers, args.task_normalization).to(device)
 
