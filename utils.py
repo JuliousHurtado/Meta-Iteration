@@ -19,7 +19,7 @@ from method.hat import HAT
 #--------------------------Load Model------------------------------#
 def getModel(args, cls_per_task, device, use_hat=False):
     if use_hat:
-        return HATModel(cls_per_task, device, args.in_channels).to(device)
+        # return HATModel(cls_per_task, device, args.in_channels).to(device)
         return HATOriginal(cls_per_task, device, args.in_channels).to(device)
     return TaskManager(cls_per_task, args.ways, args.hidden_size, args.num_layers, args.task_normalization, device).to(device)
     #return MiniImagenetCNN(args.ways, args.hidden_size, args.num_layers, args.task_normalization).to(device)

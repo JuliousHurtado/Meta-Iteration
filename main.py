@@ -104,8 +104,8 @@ def main(args, data_generators, model, device, meta_reg, task_reg):
 
         addResults(model, task_dataloader, results, device, i, opti, False, True, masks, args.re_train, task_reg['use']['hat'])
         
-        # for j in range(i+1):
-        #     print(results[j]['final_acc'])
+        for j in range(i+1):
+            print(results[j]['final_acc'])
 
         # if args.save_model:
         #     name_file = '{}/{}_{}_{}_{}_{}_{}_{}'.format('results', args.dataset, i, args.meta_learn, args.task_normalization, args.meta_label, stringRegUsed(meta_reg['use']), args.task_reg)

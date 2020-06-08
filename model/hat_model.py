@@ -114,7 +114,7 @@ class HATModel(torch.nn.Module):
 
 class HATOriginal(torch.nn.Module):
 
-    def __init__(self,inputsize,taskcla):
+    def __init__(self,taskcla, device, in_channels=3):
         super(Net,self).__init__()
 
         ncha,size,_= [in_channels,32,32]
