@@ -12,7 +12,7 @@ class HATModel(torch.nn.Module):
     def __init__(self,taskcla, device, in_channels=3):
         super(HATModel,self).__init__()
 
-        ncha,size,_= [in_channels,32,32]
+        ncha,size,_= [in_channels,28,28]
         self.taskcla=taskcla
         self.device=device
 
@@ -117,7 +117,7 @@ class HATOriginal(torch.nn.Module):
     def __init__(self,taskcla, device, in_channels=3):
         super(HATOriginal,self).__init__()
 
-        ncha,size,_= [in_channels,32,32]
+        ncha,size,_= [in_channels,28,28]
         self.taskcla=taskcla
         self.device=device
 
