@@ -8,8 +8,8 @@ tstart=time.time()
 
 # Arguments
 parser=argparse.ArgumentParser(description='xxx')
-parser.add_argument('--seed',type=int,default=0,help='(default=%(default)d)')
-parser.add_argument('--experiment',default='',type=str,required=True,choices=['pmnist'],help='(default=%(default)s)')
+parser.add_argument('--seed',type=int,default=42,help='(default=%(default)d)')
+parser.add_argument('--experiment',default='',type=str,required=True,choices=['pmnist','cifar100'],help='(default=%(default)s)')
 parser.add_argument('--approach',default='',type=str,required=True,choices=['sgd','ewc','hat','hat-conv'],help='(default=%(default)s)')
 parser.add_argument('--output',default='',type=str,required=False,help='(default=%(default)s)')
 parser.add_argument('--nepochs',default=50,type=int,required=False,help='(default=%(default)d)')
@@ -39,7 +39,9 @@ device = torch.device("cuda" if use_cuda else "cpu")
 
 # Args -- Experiment
 if args.experiment=='pmnist':
-    from pmnist import DatasetGen as dataloader
+    from loaders import pmnist as dataloader
+elif args.experiment=='cifar100':
+    from loaders import cifar100 as dataloader
 
 # Args -- Approach
 if args.approach=='sgd':
@@ -67,7 +69,7 @@ else:
 
 # Load
 print('Load data...')
-data=dataloader(seed=args.seed, batch_size=64)
+data=dataloader.DatasetGen(seed=args.seed, batch_size=64)
 taskcla,inputsize = data.taskcla, data.inputsize
 print('Input size =',inputsize,'\nTask info =',taskcla)
 

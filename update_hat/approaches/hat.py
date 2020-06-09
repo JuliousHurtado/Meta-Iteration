@@ -41,7 +41,6 @@ class Appr(object):
         return torch.optim.SGD(self.model.parameters(),lr=lr)
 
     def train(self,t,train_loader,val_loader):
-        best_loss=np.inf
         self.optimizer=self._get_optimizer(self.lr)
 
         # Loop epochs
@@ -136,8 +135,6 @@ class Appr(object):
         total_num=0
         self.model.eval()
 
-        total_reg=0
-
         r=len(loader.dataset)
 
         for images, targets in loader:
@@ -157,9 +154,6 @@ class Appr(object):
             total_loss+=loss.data.cpu().numpy().item()*b
             total_acc+=hits.sum().data.cpu().numpy().item()
             total_num+=b
-            total_reg+=reg.data.cpu().numpy().item()*b
-
-        print('  {:.3f}  '.format(total_reg/total_num),end='')
 
         return total_loss/total_num,total_acc/total_num
 
