@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from copy import deepcopy
 
-def fisher_matrix_diag(t,loader,model,criterion,sbatch=20):
+def fisher_matrix_diag(t,loader,model,criterion,sbatch=20, device='cpu'):
     # Init
     fisher={}
     for n,p in model.named_parameters():
@@ -11,12 +11,12 @@ def fisher_matrix_diag(t,loader,model,criterion,sbatch=20):
     # Compute
     model.train()
     for images, targets in loader:
-        images = images.to(self.device)
-        targets = targets.long().to(self.device)
+        images = images.to(device)
+        targets = targets.long().to(device)
         # Forward and backward
         model.zero_grad()
         outputs=model.forward(images)
-        loss=criterion(t,outputs[t],target)
+        loss=criterion(t,outputs[t],targets)
         loss.backward()
         # Get gradients
         for n,p in model.named_parameters():
@@ -24,8 +24,8 @@ def fisher_matrix_diag(t,loader,model,criterion,sbatch=20):
                 fisher[n]+=sbatch*p.grad.data.pow(2)
     # Mean
     for n,_ in model.named_parameters():
-        fisher[n]=fisher[n]/x.size(0)
-        fisher[n]=torch.autograd.Variable(fisher[n],requires_grad=False)
+        fisher[n]=fisher[n]/len(loader.dataset)
+        fisher[n].requires_grad=False
     return fisher
 
 class Appr(object):
@@ -89,7 +89,7 @@ class Appr(object):
             fisher_old={}
             for n,_ in self.model.named_parameters():
                 fisher_old[n]=self.fisher[n].clone()
-        self.fisher=fisher_matrix_diag(t,xtrain,ytrain,self.model,self.criterion)
+        self.fisher=fisher_matrix_diag(t,train_loader,self.model,self.criterion,device=self.device)
         if t>0:
             # Watch out! We do not want to keep t models (or fisher diagonals) in memory, therefore we have to merge fisher diagonals
             for n,_ in self.model.named_parameters():

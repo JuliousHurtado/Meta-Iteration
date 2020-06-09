@@ -13,6 +13,11 @@ class Net(torch.nn.Module):
         ncha,size,_=inputsize
         self.taskcla=taskcla
 
+        if ncha == 1:
+            factor = 1
+        else:
+            factor = 4 
+
 
         self.c1=torch.nn.Conv2d(ncha, 32, kernel_size=3, stride=(1,1), padding=1,bias=True)
         s=compute_conv_output_size(size,3)
@@ -37,7 +42,7 @@ class Net(torch.nn.Module):
 
         self.last=torch.nn.ModuleList()
         for t,n in self.taskcla:
-            self.last.append(torch.nn.Linear(32,n))
+            self.last.append(torch.nn.Linear(32*factor,n))
 
         self.gate=torch.nn.Sigmoid()
         # All embedding stuff should start with 'e'

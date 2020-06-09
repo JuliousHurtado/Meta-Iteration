@@ -22,8 +22,6 @@ import copy
 import torch
 from torchvision import datasets, transforms
 
-from utils import *
-
 
 class iCIFAR10(datasets.CIFAR10):
 

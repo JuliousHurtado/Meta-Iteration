@@ -9,7 +9,7 @@ tstart=time.time()
 # Arguments
 parser=argparse.ArgumentParser(description='xxx')
 parser.add_argument('--seed',type=int,default=42,help='(default=%(default)d)')
-parser.add_argument('--experiment',default='',type=str,required=True,choices=['pmnist','cifar100'],help='(default=%(default)s)')
+parser.add_argument('--experiment',default='',type=str,required=True,choices=['multi','pmnist','cifar100'],help='(default=%(default)s)')
 parser.add_argument('--approach',default='',type=str,required=True,choices=['sgd','ewc','hat','hat-conv'],help='(default=%(default)s)')
 parser.add_argument('--output',default='',type=str,required=False,help='(default=%(default)s)')
 parser.add_argument('--nepochs',default=50,type=int,required=False,help='(default=%(default)d)')
@@ -42,6 +42,8 @@ if args.experiment=='pmnist':
     from loaders import pmnist as dataloader
 elif args.experiment=='cifar100':
     from loaders import cifar100 as dataloader
+elif args.experiment=='multi':
+    from loaders import multi as dataloader
 
 # Args -- Approach
 if args.approach=='sgd':
