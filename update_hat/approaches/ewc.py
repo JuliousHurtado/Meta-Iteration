@@ -75,7 +75,7 @@ class Appr(object):
             print('| Epoch {:3d}, time={:5.1f}ms/{:5.1f}ms | Train: loss={:.3f}, acc={:5.1f}% |'.format(
                 e+1,1000*(clock1-clock0),1000*(clock2-clock1),train_loss,100*train_acc),end='')
             # Valid
-            valid_loss,valid_acc=self.eval(t,xvalid,yvalid)
+            valid_loss,valid_acc=self.eval(t,val_loader)
             print(' Valid: loss={:.3f}, acc={:5.1f}% |'.format(valid_loss,100*valid_acc),end='')
 
             print()
@@ -98,7 +98,7 @@ class Appr(object):
 
         return
 
-    def train_epoch(self,t,x,y):
+    def train_epoch(self,t,loader):
         self.model.train()
 
         r=len(loader.dataset)
@@ -109,7 +109,7 @@ class Appr(object):
             targets = targets.long().to(self.device)
 
             # Forward current model
-            outputs=self.model.forward(images)
+            outputs=self.model(images)
             output=outputs[t]
             loss=self.criterion(t,output,targets)
 
@@ -121,7 +121,7 @@ class Appr(object):
 
         return
 
-    def eval(self,t,x,y):
+    def eval(self,t,loader):
         total_loss=0
         total_acc=0
         total_num=0
@@ -135,9 +135,9 @@ class Appr(object):
             task=torch.LongTensor([t]).to(self.device)
 
             # Forward
-            outputs,masks=self.model(task,images,s=self.smax)
+            outputs=self.model(images)
             output=outputs[t]
-            loss,reg=self.criterion(output,targets,masks)
+            loss=self.criterion(t,output,targets)
             _,pred=output.max(1)
             hits=(pred==targets).float()
 
