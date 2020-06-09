@@ -14,7 +14,7 @@ parser.add_argument('--approach',default='',type=str,required=True,choices=['sgd
 parser.add_argument('--output',default='',type=str,required=False,help='(default=%(default)s)')
 parser.add_argument('--nepochs',default=50,type=int,required=False,help='(default=%(default)d)')
 parser.add_argument('--lr',default=0.003,type=float,required=False,help='(default=%(default)f)')
-parser.add_argument('--parameter',type=str,default='',help='(default=%(default)s)')
+parser.add_argument('--lamb',default=0.003,type=float,required=False,help='(default=%(default)f)')
 args=parser.parse_args()
 if args.output=='':
     args.output='../res/'+args.experiment+'_'+args.approach+'_'+str(args.seed)+'.txt'
@@ -80,7 +80,7 @@ print('Inits...')
 net=network.Net(inputsize,taskcla).to(device)
 # utils.print_model_report(net)
 
-appr=approach.Appr(net,nepochs=args.nepochs,lr=args.lr,args=args,device=device)
+appr=approach.Appr(net,nepochs=args.nepochs,lr=args.lr,args=args,device=device,lamb=args.lamb)
 print(appr.criterion)
 # utils.print_optimizer_config(appr.optimizer)
 print('-'*100)
