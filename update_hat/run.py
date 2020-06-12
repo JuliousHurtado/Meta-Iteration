@@ -15,6 +15,7 @@ parser.add_argument('--output',default='',type=str,required=False,help='(default
 parser.add_argument('--nepochs',default=50,type=int,required=False,help='(default=%(default)d)')
 parser.add_argument('--lr',default=0.003,type=float,required=False,help='(default=%(default)f)')
 parser.add_argument('--lamb',default=0.003,type=float,required=False,help='(default=%(default)f)')
+parser.add_argument('--parameter',type=str,default='',help='(default=%(default)s)')
 args=parser.parse_args()
 if args.output=='':
     args.output='../res/'+args.experiment+'_'+args.approach+'_'+str(args.seed)+'.txt'
