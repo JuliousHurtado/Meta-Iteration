@@ -1,6 +1,13 @@
+gym==0.17.1
 learn2learn==0.1.0.1
+matplotlib==3.2
+notebook==6.0.3
 numpy==1.18.2
+pandas==1.0.3
 Pillow==7.1.0
+scikit-learn==0.23.0
 scipy==1.4.1
+Send2Trash==1.5.0
 torch==1.4.0
 torchvision==0.5.0
+tqdm==4.46.0
