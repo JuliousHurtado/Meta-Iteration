@@ -36,7 +36,7 @@ Following the method for episodic training used in few-shot learning, we create 
 
 ![alt text](imgs/meta_process.jpg)
 
-For more details and formulas check the [Paper](https://github.com/JuliousHurtado/Meta-Iteration) (Coming soon)
+For more details and formulas check the [Paper](https://ieeexplore.ieee.org/abstract/document/9459700)
 
 ## Run Experiments
 To run experiments of our methods, run the following command:
@@ -46,6 +46,8 @@ To run experiments of our methods, run the following command:
 With **--dataset** you can select the dataset for the experiments, **--meta-learn** indicated to use or not the meta iteration strategy, and **--num-iterations** is the number of iteration of the meta iteration strategy.
 
 ## Reference
-Coming soon
+
+> Hurtado, Julio, Hans Lobel, and Alvaro Soto. "Overcoming catastrophic forgetting using sparse coding and meta learning." IEEE Access (2021).
+
 
 Cualquier consulta, no duden en contactarme // Any questions, do not hesitate to contact me
