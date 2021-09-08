@@ -1,7 +1,7 @@
 gym==0.17.1
 learn2learn==0.1.0.1
 matplotlib==3.2
-notebook==6.0.3
+notebook==6.4.1
 numpy==1.18.2
 pandas==1.0.3
 Pillow==8.3.2
